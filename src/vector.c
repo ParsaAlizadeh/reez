@@ -3,11 +3,6 @@
 #include <stdlib.h>
 #include <errno.h>
 
-struct _vector {
-    void **elems;
-    size_t size, capacity;
-};
-
 int vector_recap(vector *vec, size_t new_cap) {
     vec->elems = (void **)realloc(vec->elems, new_cap * sizeof(void *));
     if (!vec->elems)
@@ -26,6 +21,7 @@ vector *vector_new() {
         free(vec);
         return NULL;
     }
+    vec->elems[0] = NULL;
     return vec;
 }
 

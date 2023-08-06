@@ -3,7 +3,10 @@
 
 #include <sys/types.h>
 
-typedef struct _vector vector;
+typedef struct _vector {
+    void **elems;
+    size_t size, capacity;
+} vector;
 
 /*
  * Changes capacity of _vec_ to _new_cap_. Returns < 0 on allocation error
