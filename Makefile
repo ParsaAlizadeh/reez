@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -g -fsanitize=address -g3
+CFLAGS = -Wall -Wextra -fsanitize=address -g3 -O2
 PROGRAM = reez
 SOURCES = ${wildcard **/*.c}
 OBJECTS = ${patsubst src/%.c,build/%.o,${SOURCES}}
@@ -12,7 +12,7 @@ ${PROGRAM}: ${OBJECTS}
 
 build/%.o: src/%.c
 	@mkdir -p ${dir $@}
-	${CC} ${CFLAGS} -c -MMD  $< -o $@
+	${CC} ${CFLAGS} -c -MMD $< -o $@
 
 -include ${DEPENDS}
 
