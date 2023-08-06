@@ -28,4 +28,16 @@ vector *vector_new();
  */
 int vector_push(vector *vec, void *elem);
 
+/*
+ * Frees the _vec_ and returns the _elems_ inside it as a null-terminated
+ * array. You have to free this pointer and possibly all the elements
+ * inside it. Never returns NULL.
+ */
+void **vector_free(vector *vec);
+
+/*
+ * Frees the _vec_ and all the elements inside it.
+ */
+void vector_free_all(vector *vec);
+
 #endif

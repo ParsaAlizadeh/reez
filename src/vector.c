@@ -34,3 +34,21 @@ int vector_push(vector *vec, void *elem) {
     vec->elems[vec->size] = NULL;
     return 0;
 }
+
+void **vector_free(vector *vec) {
+    void **elems = vec->elems;
+    free(vec);
+    return elems;
+}
+
+static void free_all(void **elems) {
+    while (*elems) {
+        free(*(elems++));
+    }
+}
+
+void vector_free_all(vector *vec) {
+    void **elems = vector_free(vec);
+    free_all(elems);
+    free(elems);
+}
