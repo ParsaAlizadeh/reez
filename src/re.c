@@ -32,7 +32,7 @@ static int RE_compile_helper(char *regex, vector *vec) {
             re->chr = regex[1];
         }
         regex += 2;
-        goto out;
+        goto next;
     }
     re->chr = *regex;
     switch (*regex) {
@@ -46,7 +46,7 @@ static int RE_compile_helper(char *regex, vector *vec) {
         re->star = 1;
         regex++;
     }
-out:
+next:
     vector_push(vec, re);
     return RE_compile_helper(regex, vec);
 }
