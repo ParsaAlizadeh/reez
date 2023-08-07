@@ -3,7 +3,7 @@
 
 #include <sys/types.h>
 
-typedef struct _vector {
+typedef struct vector {
     void **elems;
     size_t size, capacity;
 } vector;

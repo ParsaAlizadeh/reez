@@ -1,9 +1,19 @@
 #ifndef _RE_H
 #define _RE_H
 
-typedef struct _RE {
+#include "vector.h"
+
+typedef enum REClosure {
+    RE_ONCE,
+    RE_MAYBE,
+    RE_STAR,
+    RE_PLUS,
+} REClosure;
+
+typedef struct RE {
     char chr;
-    int special, star;
+    int control;
+    REClosure closure;
 } RE;
 
 /*
@@ -13,9 +23,9 @@ typedef struct _RE {
 RE *RE_new();
 
 /*
- * Compile a regular expression into a null-terminated array of REs.
- * Returns NULL on error but *may not* set errno
+ * Compile a regular expression into a vector (null-terminated array) of
+ * REs. Returns NULL on error but *may not* set errno
  */
-RE **RE_compile(char *regex);
+vector *RE_compile(char *regex);
 
 #endif

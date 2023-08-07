@@ -1,15 +1,15 @@
 #include "re.h"
 
 #include <stdlib.h>
-#include "vector.h"
 
 RE *RE_new() {
     RE *re = (RE *)malloc(sizeof(RE));
     if (!re) {
         return NULL;
     }
-    re->special = 0;
-    re->star = 0;
+    re->chr = '\0';
+    re->control = 0;
+    re->closure = RE_ONCE;
     return re;
 }
 
@@ -30,10 +30,18 @@ static int RE_compile_helper(char *regex, vector *vec) {
         goto next;
     }
     re->chr = *regex;
-    re->special = (*regex == '^' || *regex == '$' || *regex == '.');
+    if (*regex == '^' || *regex == '$' || *regex == '.') {
+        re->control = 1;
+    }
     regex++;
-    if (*regex == '*') {
-        re->star = 1;
+    if (*regex == '?') {
+        re->closure = RE_MAYBE;
+        regex++;
+    } else if (*regex == '*') {
+        re->closure = RE_STAR;
+        regex++;
+    } else if (*regex == '+') {
+        re->closure = RE_PLUS;
         regex++;
     }
 next:
@@ -41,7 +49,7 @@ next:
     return RE_compile_helper(regex, vec);
 }
 
-RE **RE_compile(char *regex) {
+vector *RE_compile(char *regex) {
     vector *vec;
     if (!(vec = vector_new())) {
         return NULL;
@@ -50,5 +58,5 @@ RE **RE_compile(char *regex) {
         vector_free_all(vec);
         return NULL;
     }
-    return (RE **)vector_free(vec);
+    return vec;
 }
