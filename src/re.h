@@ -6,11 +6,6 @@
 #define RE_DIGITS "0123456789"
 #define RE_CONTROLS ".^$"
 
-typedef enum REType {
-    RE_SINGLE,
-    RE_SET,
-} REType;
-
 typedef enum REClosure {
     RE_ONCE,
     RE_MAYBE,
@@ -22,7 +17,6 @@ typedef struct RE {
     char chr;
     int control, exclude;
     REClosure closure;
-    REType type;
     char *set;
 } RE;
 

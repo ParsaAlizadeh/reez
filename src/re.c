@@ -12,7 +12,6 @@ static RE *RE_new() {
     re->control = 0;
     re->closure = RE_ONCE;
     re->exclude = 0;
-    re->type = RE_SINGLE;
     re->set = NULL;
     return re;
 }
@@ -26,7 +25,6 @@ static int _compile_escape(char *regex, RE *re) {
         return 0;
     }
     if (regex[1] == 'd' || regex[1] == 'D') {
-        re->type = RE_SET;
         re->set = RE_DIGITS;
         re->exclude = regex[1] == 'D';
         return 0;
