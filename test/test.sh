@@ -13,6 +13,8 @@ PATTERNS=(
     '^b+a+b+$'
     'b$'
     'a$'
+    '\d'
+    '^a\d+'
     '^[ab]+$'
     '^(aa)+$'
 )
@@ -39,14 +41,14 @@ failed=0
 for pattern in "${PATTERNS[@]}"; do
     if diff \
         <($REEZ "$pattern" $SAMPLE 2>/dev/null) \
-        <(grep -E "$pattern" $SAMPLE 2>/dev/null) \
+        <(grep -P "$pattern" $SAMPLE 2>/dev/null) \
         >/dev/null 2>&1
     then
         echook "$pattern"
     else
         echobad "$pattern"
         show-and-run $REEZ "$pattern" $SAMPLE
-        show-and-run grep -E "$pattern" $SAMPLE
+        show-and-run grep -P "$pattern" $SAMPLE
         failed=1
     fi
 done
