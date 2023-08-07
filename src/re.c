@@ -1,6 +1,7 @@
 #include "re.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 static RE *RE_new() {
     RE *re = (RE *)malloc(sizeof(RE));
@@ -10,10 +11,47 @@ static RE *RE_new() {
     re->chr = '\0';
     re->control = 0;
     re->closure = RE_ONCE;
+    re->exclude = 0;
+    re->type = RE_SINGLE;
+    re->set = NULL;
     return re;
 }
 
-static int RE_compile_helper(char *regex, vector *vec) {
+static int _compile_escape(char *regex, RE *re) {
+    if (regex[1] == '\0') {
+        return -1;
+    }
+    if (regex[1] == 't') {
+        re->chr = '\t';
+        return 0;
+    }
+    if (regex[1] == 'd' || regex[1] == 'D') {
+        re->type = RE_SET;
+        re->set = RE_DIGITS;
+        re->exclude = regex[1] == 'D';
+        return 0;
+    }
+    re->chr = regex[1];
+    return 0;
+}
+
+static int _compile_closure(char *regex, RE *re) {
+    switch (*regex) {
+    case '?':
+        re->closure = RE_MAYBE;
+        return 0;
+    case '*':
+        re->closure = RE_STAR;
+        return 0;
+    case '+':
+        re->closure = RE_PLUS;
+        return 0;
+    default:
+        return -1;
+    }
+}
+
+static int _compile_helper(char *regex, vector *vec) {
     if (!*regex) {
         return 0;
     }
@@ -22,31 +60,24 @@ static int RE_compile_helper(char *regex, vector *vec) {
         return -1;
     }
     if (*regex == '\\') {
-        if (!regex[1]) {
+        if (_compile_escape(regex, re) < 0) {
+            free(re);
             return -1;
         }
-        re->chr = regex[1] == 't' ? '\t' : regex[1];
         regex += 2;
         goto next;
     }
     re->chr = *regex;
-    if (*regex == '^' || *regex == '$' || *regex == '.') {
+    if (strchr(RE_CONTROLS, *regex)) {
         re->control = 1;
     }
     regex++;
-    if (*regex == '?') {
-        re->closure = RE_MAYBE;
-        regex++;
-    } else if (*regex == '*') {
-        re->closure = RE_STAR;
-        regex++;
-    } else if (*regex == '+') {
-        re->closure = RE_PLUS;
+    if (_compile_closure(regex, re) >= 0) {
         regex++;
     }
 next:
     vector_push(vec, re);
-    return RE_compile_helper(regex, vec);
+    return _compile_helper(regex, vec);
 }
 
 vector *RE_compile(char *regex) {
@@ -54,7 +85,7 @@ vector *RE_compile(char *regex) {
     if (!(vec = vector_new())) {
         return NULL;
     }
-    if (RE_compile_helper(regex, vec) < 0) {
+    if (_compile_helper(regex, vec) < 0) {
         vector_free_all(vec);
         return NULL;
     }
