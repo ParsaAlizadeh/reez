@@ -65,17 +65,16 @@ static int _compile_helper(char *regex, vector *vec) {
             return -1;
         }
         regex += 2;
-        goto next;
+    } else {
+        re->chr = *regex;
+        if (strchr(RE_CONTROLS, *regex)) {
+            re->control = 1;
+        }
+        regex++;
     }
-    re->chr = *regex;
-    if (strchr(RE_CONTROLS, *regex)) {
-        re->control = 1;
-    }
-    regex++;
     if (_compile_closure(regex, re) >= 0) {
         regex++;
     }
-next:
     vector_push(vec, re);
     return _compile_helper(regex, vec);
 }

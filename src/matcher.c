@@ -1,6 +1,7 @@
 #include "matcher.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include "re.h"
 
 static int match_helper(RE **regex, char *text);
@@ -28,6 +29,9 @@ static int match_helper(RE **regex, char *text) {
 static int match_one(RE *re, char text) {
     if (text == '\0') {
         return 0;
+    }
+    if (re->type == RE_SET) {
+        return re->exclude ^ (strchr(re->set, text) != NULL);
     }
     return (re->control && re->chr == '.') || re->chr == text;
 }
