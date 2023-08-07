@@ -6,6 +6,7 @@
 
 static int _match_helper(RE **regex, char *text);
 static int _match_one(RE *re, char text);
+static int _match_set(RE *re, char text);
 static int _match_here(RE **regex, char *text);
 static int _match_star(RE **regex, char *text, RE *re);
 static int _match_maybe(RE **regex, char *text, RE *re);
@@ -31,9 +32,19 @@ static int _match_one(RE *re, char text) {
         return 0;
     }
     if (re->set) {
-        return re->exclude ^ (strchr(re->set, text) != NULL);
+        return _match_set(re, text);
     }
     return (re->control && re->chr == '.') || re->chr == text;
+}
+
+static int _match_set(RE *re, char text) {
+    char *set = re->set;
+    while (*set != '\0' && *set != ']') {
+        if (*(set++) == text) {
+            return !re->exclude;
+        }
+    }
+    return re->exclude;
 }
 
 static int _match_here(RE **regex, char *text) {

@@ -49,6 +49,21 @@ static int _compile_closure(char *regex, RE *re) {
     }
 }
 
+static int _compile_set(char *regex, RE *re) {
+    char *close = strchr(regex, ']');
+    if (!close) {
+        return -1;
+    }
+    if (regex[1] == '^') {
+        regex += 2;
+        re->exclude = 1;
+    } else {
+        regex++;
+    }
+    re->set = regex;
+    return 0;
+}
+
 static int _compile_helper(char *regex, vector *vec) {
     if (!*regex) {
         return 0;
@@ -63,6 +78,12 @@ static int _compile_helper(char *regex, vector *vec) {
             return -1;
         }
         regex += 2;
+    } else if (*regex == '[') {
+        if (_compile_set(regex, re) < 0) {
+            free(re);
+            return -1;
+        }
+        regex = strchr(regex, ']') + 1;
     } else {
         re->chr = *regex;
         if (strchr(RE_CONTROLS, *regex)) {
