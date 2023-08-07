@@ -18,3 +18,8 @@ build/%.o: src/%.c
 
 clean:
 	rm -rf build/ ${PROGRAM}
+.PHONY: clean
+
+test: ${PROGRAM}
+	./test/test.sh ./${PROGRAM}
+.PHONY: test
