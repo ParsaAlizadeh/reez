@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static RE *RE_new() {
+static RE *_new() {
     RE *re = (RE *)malloc(sizeof(RE));
     if (!re) {
         return NULL;
@@ -54,7 +54,7 @@ static int _compile_helper(char *regex, vector *vec) {
         return 0;
     }
     RE *re;
-    if (!(re = RE_new())) {
+    if (!(re = _new())) {
         return -1;
     }
     if (*regex == '\\') {

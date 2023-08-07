@@ -44,7 +44,7 @@ void **vector_free(vector *vec) {
     return elems;
 }
 
-static void free_all(void **elems) {
+static void _free_all(void **elems) {
     while (*elems) {
         free(*(elems++));
     }
@@ -52,6 +52,6 @@ static void free_all(void **elems) {
 
 void vector_free_all(vector *vec) {
     void **elems = vector_free(vec);
-    free_all(elems);
+    _free_all(elems);
     free(elems);
 }
