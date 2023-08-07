@@ -1,3 +1,8 @@
-int match(char *regex, char *text);
-int match_here(char *regex, char *text);
-int match_star(char *regex, char *text, char c);
+#ifndef _MATCHER_H
+#define _MATCHER_H
+
+#include "vector.h"
+
+int match(vector *regex, char *text);
+
+#endif
