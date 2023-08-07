@@ -37,7 +37,7 @@ static int match_here(RE **regex, char *text) {
         return 1;
     }
     if (regex[0]->control && regex[0]->chr == '$') {
-        return !text[0];
+        return text[0] == '\0' || text[0] == '\n';
     }
     if (regex[0]->closure == RE_STAR || regex[0]->closure == RE_PLUS) {
         return match_star(regex + 1, text, regex[0]);

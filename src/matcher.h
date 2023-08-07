@@ -5,7 +5,8 @@
 
 /*
  * Given a vector of REs _regex_, searches them inside null-terminated
- * _text_. Doesn't change _regex_. Returns 1 if found, 0 otherwise.
+ * _text_. '\n' is considered as the end of the text. Won't change _regex_.
+ * Returns 1 if found, 0 otherwise.
  */
 int match(vector *regex, char *text);
 
