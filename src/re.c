@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 
-RE *RE_new() {
+static RE *RE_new() {
     RE *re = (RE *)malloc(sizeof(RE));
     if (!re) {
         return NULL;

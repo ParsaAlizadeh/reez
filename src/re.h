@@ -17,12 +17,6 @@ typedef struct RE {
 } RE;
 
 /*
- * Allocates and initialize a RE and return it. Returns NULL on error and
- * set errno
- */
-RE *RE_new();
-
-/*
  * Compile a regular expression into a vector (null-terminated array) of
  * REs. Returns NULL on error but *may not* set errno
  */
