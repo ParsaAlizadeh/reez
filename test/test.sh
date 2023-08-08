@@ -41,16 +41,17 @@ echobad() {
 
 failed=0
 for pattern in "${PATTERNS[@]}"; do
+    argv=( '-v' "$pattern" $SAMPLE )
     if diff \
-        <($REEZ "$pattern" $SAMPLE 2>/dev/null) \
-        <(grep -P "$pattern" $SAMPLE 2>/dev/null) \
+        <($REEZ "${argv[@]}" 2>/dev/null) \
+        <(grep -P "${argv[@]}" 2>/dev/null) \
         >/dev/null 2>&1
     then
         echook "$pattern"
     else
         echobad "$pattern"
-        show-and-run $REEZ "$pattern" $SAMPLE
-        show-and-run grep -P "$pattern" $SAMPLE
+        show-and-run $REEZ "${argv[@]}"
+        show-and-run grep -P "${argv[@]}"
         failed=1
     fi
 done
