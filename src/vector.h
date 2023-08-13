@@ -1,38 +1,42 @@
-#ifndef _VECTOR_H
-#define _VECTOR_H
+#ifndef VECTOR_H
+#define VECTOR_H
 
 #include <sys/types.h>
 
-/*
- * null-terminated array of pointers with flexibility in size
- */
 typedef struct vector {
-    void **elems;
-    size_t size;        // size of array
-    size_t capacity;
+    void *mem;      /* void mem[.nbyte * .cap] */
+    size_t nbyte;
+    size_t nelem;
+    size_t cap;
 } vector;
 
 /*
- * allocates a new vector. on error returns NULL and set errno.
+ * on error returns NULL and set errno
  */
-vector *vector_new();
+vector *vector_new(size_t nbyte);
 
 /*
- * push a new pointer to the end of vector. increase vec->size by 1. may
- * change vec->elems but the elements inside (e.g. vec->elems[i]) are
- * untouched. on error returns -1 and set errno.
+ * on error returns -1 and set errno
  */
-int vector_push(vector *vec, void *elem);
+int vector_incrcap(vector *vec, size_t newcap);
 
 /*
- * frees the vector and returns vec->elems as a null-terminated array of
- * pointers.
+ * given invalid index returns NULL
  */
-void **vector_free(vector *vec);
+void *vector_at(vector *vec, size_t index);
 
 /*
- * frees the vector and all the pointers inside it
+ * copies nbyte from src to the end of vector. returns pointer to that
+ * location (e.g. vector_at(vec, nelem)). on error returns NULL and set
+ * errno */
+void *vector_push(vector *vec, const void *src);
+
+/*
+ * pops last element of the vector. if dest != NULL, copies nbyte that was
+ * last element to dest. given empty vector returns -1.
  */
-void vector_free_all(vector *vec);
+int vector_pop(vector *vec, void *dest);
+
+void vector_free(vector *vec);
 
 #endif

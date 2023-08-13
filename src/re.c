@@ -3,23 +3,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-static RE *_new() {
-    RE *re = (RE *)malloc(sizeof(RE));
-    if (!re) {
-        return NULL;
-    }
-    re->chr = '\0';
-    re->control = 0;
-    re->closure = RE_ONCE;
-    re->exclude = 0;
-    re->set = NULL;
-    return re;
-}
+static const RE _RE_DEFAULT = {
+    .chr = '\0',
+    .control = 0,
+    .closure = RE_ONCE,
+    .exclude = 0,
+    .set = NULL
+};
 
-static int _compile_escape(char *regex, RE *re) {
-    if (regex[1] == '\0') {
+static int _compile_escape(const char *regex, RE *re) {
+    if (regex[1] == '\0')
         return -1;
-    }
     if (regex[1] == 't') {
         re->chr = '\t';
         return 0;
@@ -33,7 +27,7 @@ static int _compile_escape(char *regex, RE *re) {
     return 0;
 }
 
-static int _compile_closure(char *regex, RE *re) {
+static int _compile_closure(const char *regex, RE *re) {
     switch (*regex) {
     case '?':
         re->closure = RE_MAYBE;
@@ -49,11 +43,10 @@ static int _compile_closure(char *regex, RE *re) {
     }
 }
 
-static int _compile_set(char *regex, RE *re) {
+static int _compile_set(const char *regex, RE *re) {
     char *close = strchr(regex, ']');
-    if (!close) {
+    if (!close)
         return -1;
-    }
     if (regex[1] == '^') {
         regex += 2;
         re->exclude = 1;
@@ -64,48 +57,46 @@ static int _compile_set(char *regex, RE *re) {
     return 0;
 }
 
-static int _compile_helper(char *regex, vector *vec) {
+static int _compile_helper(const char *regex, vector *vec) {
     if (!*regex) {
+        if (vector_push(vec, &_RE_DEFAULT) == NULL)
+            return -1;
         return 0;
     }
-    RE *re;
-    if (!(re = _new())) {
-        return -1;
-    }
+    RE re = _RE_DEFAULT;
     if (*regex == '\\') {
-        if (_compile_escape(regex, re) < 0) {
-            free(re);
+        if (_compile_escape(regex, &re) == -1)
             return -1;
-        }
         regex += 2;
     } else if (*regex == '[') {
-        if (_compile_set(regex, re) < 0) {
-            free(re);
+        if (_compile_set(regex, &re) == -1)
             return -1;
-        }
         regex = strchr(regex, ']') + 1;
     } else {
-        re->chr = *regex;
+        re.chr = *regex;
         if (strchr(RE_CONTROLS, *regex)) {
-            re->control = 1;
+            re.control = 1;
         }
         regex++;
     }
-    if (_compile_closure(regex, re) >= 0) {
+    if (_compile_closure(regex, &re) != -1)
         regex++;
-    }
-    vector_push(vec, re);
+    if (vector_push(vec, &re) == NULL)
+        return -1;
     return _compile_helper(regex, vec);
 }
 
-vector *RE_compile(char *regex) {
-    vector *vec;
-    if (!(vec = vector_new())) {
+vector *RE_compile(const char *regex) {
+    vector *vec = vector_new(sizeof(RE));
+    if (vec == NULL)
         return NULL;
-    }
-    if (_compile_helper(regex, vec) < 0) {
-        vector_free_all(vec);
+    if (_compile_helper(regex, vec) == -1) {
+        vector_free(vec);
         return NULL;
     }
     return vec;
+}
+
+int is_RE(const RE *re) {
+    return re->chr != '\0' || re->set != NULL;
 }

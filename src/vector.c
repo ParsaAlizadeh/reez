@@ -1,57 +1,65 @@
 #include "vector.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 
-static int vector_recap(vector *vec, size_t new_cap) {
-    vec->elems = (void **)realloc(vec->elems, new_cap * sizeof(void *));
-    if (!vec->elems) {
+int vector_incrcap(vector *vec, size_t newcap) {
+    vec->mem = realloc(vec->mem, newcap * vec->nbyte);
+    if (vec->mem == NULL)
         return -1;
-    }
-    vec->capacity = new_cap;
+    vec->cap = newcap;
     return 0;
 }
 
-vector *vector_new() {
-    vector *vec = (vector *)malloc(sizeof(vector));
-    if (!vec) {
+static void _vector_init(vector *vec, size_t nbyte) {
+    vec->mem = NULL;
+    vec->nelem = 0;
+    vec->nbyte = nbyte;
+    vec->cap = 0;
+}
+
+vector *vector_new(size_t nbyte) {
+    vector *vec = malloc(sizeof(vector));
+    if (vec == NULL)
         return NULL;
-    }
-    vec->elems = NULL;
-    vec->size = 0;
-    if (vector_recap(vec, 4) < 0) {
-        free(vec);
-        return NULL;
-    }
-    vec->elems[0] = NULL;
+    _vector_init(vec, nbyte);
     return vec;
 }
 
-int vector_push(vector *vec, void *elem) {
-    if (vec->size + 1 == vec->capacity) {
-        if (vector_recap(vec, 2 * vec->capacity) < 0) {
-            return -1;
-        }
-    }
-    vec->elems[vec->size++] = elem;
-    vec->elems[vec->size] = NULL;
-    return 0;
+static void *_vector_unsafeat(vector *vec, size_t index) {
+    return vec->mem + (index * vec->nbyte);
 }
 
-void **vector_free(vector *vec) {
-    void **elems = vec->elems;
+void *vector_at(vector *vec, size_t index) {
+    if (index >= vec->nelem)
+        return NULL;
+    return _vector_unsafeat(vec, index);
+}
+
+void *vector_push(vector *vec, const void *src) {
+    if (vec->nelem >= vec->cap) {
+        size_t newcap = 2 * vec->nelem;
+        if (vec->nelem == 0)
+            newcap = 1;
+        if (vector_incrcap(vec, newcap) == -1)
+            return NULL;
+    }
+    void *dest = _vector_unsafeat(vec, vec->nelem++);
+    memcpy(dest, src, vec->nbyte);
+    return dest;
+}
+
+void vector_free(vector *vec) {
+    free(vec->mem);
     free(vec);
-    return elems;
 }
 
-static void _free_all(void **elems) {
-    while (*elems) {
-        free(*(elems++));
-    }
-}
-
-void vector_free_all(vector *vec) {
-    void **elems = vector_free(vec);
-    _free_all(elems);
-    free(elems);
+int vector_pop(vector *vec, void *dest) {
+    if (vec->nelem == 0)
+        return -1;
+    if (dest != NULL)
+        memcpy(dest, _vector_unsafeat(vec, vec->nelem-1), vec->nbyte);
+    vec->nelem--;
+    return 0;
 }

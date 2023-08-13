@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
         }
         search_file(file, regex, &count);
     }
-    vector_free_all(regex);
+    vector_free(regex);
     if (!f_quiet && f_count) {
         printf("%d\n", count);
     }
