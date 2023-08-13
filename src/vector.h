@@ -3,40 +3,35 @@
 
 #include <sys/types.h>
 
+/*
+ * null-terminated array of pointers with flexibility in size
+ */
 typedef struct vector {
     void **elems;
-    size_t size, capacity;
+    size_t size;        // size of array
+    size_t capacity;
 } vector;
 
 /*
- * Changes capacity of _vec_ to _new_cap_. Returns < 0 on allocation error
- * and set errno
- */
-int vector_recap(vector *vec, size_t new_cap);
-
-/*
- * Allocates a new vector and returns it. Initial capacity is 4. It will
- * not manage the allocation of elements. You need to free(3) the returned
- * vector and possibly all the elements you had pushed. Returns NULL on
- * allocation error and set errno.
+ * allocates a new vector. on error returns NULL and set errno.
  */
 vector *vector_new();
 
 /*
- * Pushes a new _elem_ at the end of _vec_. Changes _vec_->size and
- * probably _vec_->elems. Returns < 0 on error and set errno.
+ * push a new pointer to the end of vector. increase vec->size by 1. may
+ * change vec->elems but the elements inside (e.g. vec->elems[i]) are
+ * untouched. on error returns -1 and set errno.
  */
 int vector_push(vector *vec, void *elem);
 
 /*
- * Frees the _vec_ and returns the _elems_ inside it as a null-terminated
- * array. You have to free this pointer and possibly all the elements
- * inside it. Never returns NULL.
+ * frees the vector and returns vec->elems as a null-terminated array of
+ * pointers.
  */
 void **vector_free(vector *vec);
 
 /*
- * Frees the _vec_ and all the elements inside it.
+ * frees the vector and all the pointers inside it
  */
 void vector_free_all(vector *vec);
 

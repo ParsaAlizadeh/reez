@@ -4,9 +4,9 @@
 #include "vector.h"
 
 /*
- * Given a vector of REs _regex_, searches them inside null-terminated
- * _text_. '\n' is considered as the end of the text. Won't change _regex_.
- * Returns 1 if found, 0 otherwise.
+ * given a compile regex as a vector of REs, searches that pattern inside
+ * text. '\n' and '\0' are both considered as the end of the text. vector
+ * remains untouched. returns a boolean.
  */
 int match(vector *regex, char *text);
 

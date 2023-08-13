@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
-int vector_recap(vector *vec, size_t new_cap) {
+static int vector_recap(vector *vec, size_t new_cap) {
     vec->elems = (void **)realloc(vec->elems, new_cap * sizeof(void *));
     if (!vec->elems) {
         return -1;

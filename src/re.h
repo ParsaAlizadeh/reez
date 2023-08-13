@@ -13,6 +13,9 @@ typedef enum REClosure {
     RE_PLUS,
 } REClosure;
 
+/*
+ * represents a single element of a regular expressions.
+ */
 typedef struct RE {
     char chr;
     int control, exclude;
@@ -21,8 +24,8 @@ typedef struct RE {
 } RE;
 
 /*
- * Compile a regular expression into a vector (null-terminated array) of
- * REs. Returns NULL on error but *may not* set errno
+ * compiles a regular expression into a vector of REs. on error returns
+ * NULL.
  */
 vector *RE_compile(char *regex);
 
