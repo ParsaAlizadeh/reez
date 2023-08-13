@@ -12,7 +12,7 @@ static int search_file(FILE *file, vector *regex, int *count) {
     char *line = NULL;
     size_t n_line = 0;
     while (getline(&line, &n_line, file) >= 0) {
-        if (f_invert ^ match(regex, line)) {
+        if (f_invert ^ ismatch(regex, line)) {
             (*count)++;
             if (!f_quiet && !f_count) {
                 printf("%s", line);

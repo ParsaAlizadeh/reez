@@ -11,7 +11,7 @@ static int _match_here(RE **regex, char *text);
 static int _match_star(RE **regex, char *text, RE *re);
 static int _match_maybe(RE **regex, char *text, RE *re);
 
-int match(vector *regex, char *text) {
+int ismatch(vector *regex, char *text) {
     return _match_helper((RE **)regex->elems, text);
 }
 
