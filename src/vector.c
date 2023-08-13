@@ -5,9 +5,10 @@
 #include <errno.h>
 
 int vector_incrcap(vector *vec, size_t newcap) {
-    vec->mem = realloc(vec->mem, newcap * vec->nbyte);
-    if (vec->mem == NULL)
+    void *newmem = realloc(vec->mem, newcap * vec->nbyte);
+    if (newmem == NULL)
         return -1;
+    vec->mem = newmem;
     vec->cap = newcap;
     return 0;
 }
