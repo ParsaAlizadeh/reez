@@ -20,15 +20,15 @@ clean:
 	rm -rf build/ ${PROGRAM}
 .PHONY: clean
 
-test: ${PROGRAM} test/sample.txt
-	./test/test.sh ./${PROGRAM}
+test: ${PROGRAM} ./test/test.sh test/sample.txt
+	./test/test.sh
 .PHONY: test
 
 test/make-sample: test/make-sample.c
 	${CC} -O2 $< -o $@
 
-test/sample.txt: test/make-sample
-	./test/make-sample 5 "abc123 " > $@
+test/sample.txt: test/make-sample Makefile
+	./test/make-sample 5 "ab12.?*+^$$\[] " > $@
 
 clean-test:
 	rm -rf test/make-sample test/sample.txt

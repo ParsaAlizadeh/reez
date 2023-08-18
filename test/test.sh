@@ -1,62 +1,93 @@
 #!/bin/bash
 
-REEZ="$1"
-SAMPLE='test/sample.txt'
-
-PATTERNS=(
-    '^a'
-    '^b'
-    '^a*$'
-    '^b*a*$'
-    '^b*a+$'
-    '^b+a?b+$'
-    '^b+a+b+$'
-    'b$'
-    'a$'
-    '\d'
-    '^a\d+'
-    '\D+.b$'
-    '^[ab]+$'
-    '^[^b]+$'
-    '^a(aa)+$'
+tests=(
+    test-substr
+    test-prefix
+    test-suffix
+    test-closure
+    test-set
 )
 
-if [[ -z "${REEZ}" ]]; then
-    echo "Usage: $0 <program>" >&2
-    exit 1
-fi
-
-show-and-run() {
-    echo '== '"$@"
-    "$@"
+test-substr() {
+    do-test ''
+    do-test 'a'
+    do-test 'z'
+    do-test '12'
+    do-test 'b  a '
+    do-test '\.\.'
 }
 
-echook() {
-    echo -e '\e[1;32m[OK] '"$@"'\e[0m'
+test-prefix() {
+    do-test '^'
+    do-test '^bba'
+    do-test '^\^'
 }
 
-echobad() {
-    echo -e '\e[1;31m[BAD] '"$@"'\e[0m'
+test-suffix() {
+    do-test '$'
+    do-test '23$'
+    do-test '\$\$$'
+}
+
+test-closure() {
+    do-test 'a*'
+    do-test '^a*$'
+    do-test '^b+a?b+$'
+    do-test '1\++2'
+    do-test '1\*\*2*'
+}
+
+test-set() {
+    do-test '\d'
+    do-test '^2\D+'
+    do-test '^[ba]*$'
+    do-test '^[^2]+$'
+    do-test '^a.*[.]\d$'
+    do-test '\d+\+\d+\'
+    do-test '1\.2.a$'
+    do-test '[*+.]+[^?]?'
 }
 
 failed=0
-for pattern in "${PATTERNS[@]}"; do
-    argv=( '-v' "$pattern" $SAMPLE )
-    if diff \
-        <($REEZ "${argv[@]}" 2>/dev/null) \
-        <(grep -P "${argv[@]}" 2>/dev/null) \
-        >/dev/null 2>&1
-    then
-        echook "$pattern"
+do-test() {
+    local origsum expcsum
+    origsum="$(./reez "$@" test/sample.txt 2>/dev/null | sha1sum)"
+    expcsum="$(grep -P "$@" test/sample.txt 2>/dev/null | sha1sum)"
+    if [[ "$origsum" == "$expcsum" ]]; then
+        wecho-ok "do-test '""$@"\'
     else
-        echobad "$pattern"
-        failed=1
+        wecho-bad "do-test '""$@"\'
+        : $(( failed += 1 ))
     fi
-done
+}
 
-if (( failed == 1 )); then
-    echobad 'failed at least one test'
-    exit 1
-fi
+test-all() {
+    for batch in "${tests[@]}"; do
+        failed=0
+        "$batch"
+        if (( failed == 0 )); then
+            wecho-ok "$batch passed"
+        else
+            wecho-bad "$batch failed on $failed test(s)"
+        fi
+        wecho
+    done
+}
 
-echook 'passed all tests'
+C_GREEN='\e[1;32m'
+C_RED='\e[1;31m'
+C_RESET='\e[0m'
+
+wecho-ok() {
+    wecho -e "${C_GREEN}OK: ""$@""${C_RESET}"
+}
+
+wecho-bad() {
+    wecho -e "${C_RED}BAD: ""$@""${C_RESET}"
+}
+
+wecho() {
+    echo >&2 "$@"
+}
+
+test-all
