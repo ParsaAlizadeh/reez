@@ -5,7 +5,7 @@ tests=(
     test-prefix
     test-suffix
     test-closure
-    test-set
+    test-charset
 )
 
 test-substr() {
@@ -37,7 +37,7 @@ test-closure() {
     do-test '1\*\*2*'
 }
 
-test-set() {
+test-charset() {
     do-test '\d'
     do-test '^2\D+'
     do-test '^[ba]*$'
@@ -48,30 +48,38 @@ test-set() {
     do-test '[*+.]+[^?]?'
 }
 
-failed=0
+test_failed=0
+batch_failed=0
+
 do-test() {
     local origsum expcsum
     origsum="$(./reez "$@" test/sample.txt 2>/dev/null | sha1sum)"
     expcsum="$(grep -P "$@" test/sample.txt 2>/dev/null | sha1sum)"
-    if [[ "$origsum" == "$expcsum" ]]; then
-        wecho-ok "do-test '""$@"\'
-    else
+    if [[ "$origsum" != "$expcsum" ]]; then
         wecho-bad "do-test '""$@"\'
-        : $(( failed += 1 ))
+        : $(( test_failed += 1 ))
+    elif (( verbose > 0 )); then
+        wecho-ok "do-test '""$@"\'
     fi
 }
 
 test-all() {
     for batch in "${tests[@]}"; do
-        failed=0
+        test_failed=0
         "$batch"
-        if (( failed == 0 )); then
+        if (( test_failed > 0 )); then
+            wecho-bad "$batch failed on $test_failed test(s)"
+            : $(( batch_failed += 1 ))
+        elif (( verbose > 0 )); then
             wecho-ok "$batch passed"
-        else
-            wecho-bad "$batch failed on $failed test(s)"
+            wecho
         fi
-        wecho
     done
+    if (( batch_failed > 0 )); then
+        wecho-bad "failed on $batch_failed batche(s)"
+    else
+        wecho-ok "passed"
+    fi
 }
 
 C_GREEN='\e[1;32m'
@@ -90,4 +98,22 @@ wecho() {
     echo >&2 "$@"
 }
 
-test-all
+usage() {
+    wecho "Usage: $0 [-h] [-v]"
+    exit 1
+}
+
+verbose=0
+while (( $# > 0 )); do
+    case "$1" in
+        '-v')
+            : $(( verbose += 1 ))
+            shift
+        ;;
+        *)
+            usage
+        ;;
+    esac
+done
+
+make test && test-all

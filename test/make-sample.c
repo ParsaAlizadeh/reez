@@ -1,11 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-enum {
-    N = 100
-};
-
-char buf[N];
+char buf[20];
 
 void generate(int i, int maxlength, const char *charset) {
     buf[i] = '\0';

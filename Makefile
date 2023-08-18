@@ -6,6 +6,7 @@ OBJECTS = ${patsubst src/%.c,build/%.o,${SOURCES}}
 DEPENDS = ${patsubst %.o,%.d,${OBJECTS}}
 
 all: ${PROGRAM}
+.PHONY: all
 
 ${PROGRAM}: ${OBJECTS}
 	${CC} ${CFLAGS} ${OBJECTS} -o ${PROGRAM}
@@ -20,8 +21,7 @@ clean:
 	rm -rf build/ ${PROGRAM}
 .PHONY: clean
 
-test: ${PROGRAM} ./test/test.sh test/sample.txt
-	./test/test.sh
+test: ${PROGRAM} test/sample.txt
 .PHONY: test
 
 test/make-sample: test/make-sample.c
