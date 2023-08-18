@@ -1,4 +1,4 @@
 /build
 /reez
-test/make-sample
-test/sample.txt
+test/comb
+test/*.in

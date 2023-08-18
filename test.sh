@@ -10,47 +10,58 @@ tests=(
 )
 
 test-substr() {
-    do-test ''
-    do-test 'a'
-    do-test 'z'
-    do-test '\.\.'
+    for f in test/*.in; do
+        do-test $f ''
+        do-test $f 'a'
+        do-test $f 'z'
+        do-test $f '\.\.'
+    done
 }
 
 test-prefix() {
-    do-test '^'
-    do-test '^bba'
-    do-test '^\^'
+    for f in test/*.in; do
+        do-test $f '^'
+        do-test $f '^bba'
+        do-test $f '^\^'
+    done
 }
 
 test-suffix() {
-    do-test '$'
-    do-test '23$'
-    do-test '\$\$$'
+    for f in test/*.in; do
+        do-test $f '$'
+        do-test $f '23$'
+        do-test $f '\$\$$'
+    done
 }
 
 test-randsubstr() {
-    while read line; do
-        do-test "$line"
-    done < <(./test/make-sample 4 'ab12. ^$' | grep -Pv '.\^|\$.' | awk 'rand() < 0.02')
+    ./test/comb 4 'ab12. ^$' | grep -Pv '.\^|\$.' | awk 'rand() < 0.02' | \
+        while read line; do
+            do-test test/comb.in "$line"
+        done
 }
 
 test-closure() {
-    do-test 'a*'
-    do-test '^a*$'
-    do-test '^b+a?b+$'
-    do-test '1\++2'
-    do-test '1\*\*2*'
+    for f in test/*.in; do
+        do-test $f 'a*'
+        do-test $f '^a*$'
+        do-test $f '^b+a?b+$'
+        do-test $f '1\++2'
+        do-test $f '1\*\*2*'
+    done
 }
 
 test-charset() {
-    do-test '\d'
-    do-test '^2\D+'
-    do-test '^[ba]*$'
-    do-test '^[^2]+$'
-    do-test '^a.*[.]\d$'
-    do-test '\d+\+\d+\'
-    do-test '1\.2.a$'
-    do-test '[*+.]+[^?]?'
+    for f in test/*.in; do
+        do-test $f '\d'
+        do-test $f '^2\D+'
+        do-test $f '^[ba]*$'
+        do-test $f '^[^2]+$'
+        do-test $f '^a.*[.]\d$'
+        do-test $f '\d+\+\d+\'
+        do-test $f '1\.2.a$'
+        do-test $f '[*+.]+[^?]?'
+    done
 }
 
 test_failed=0
@@ -58,22 +69,30 @@ batch_failed=0
 
 do-test() {
     local origsum expcsum
-    origsum="$(./reez "$@" test/sample.txt 2>/dev/null | sha1sum)"
-    expcsum="$(grep -P "$@" test/sample.txt 2>/dev/null | sha1sum)"
+    local -r testfile="$1"; shift
+    origsum="$(./reez "$@" "$testfile" 2>/dev/null | sha1sum)"
+    expcsum="$(grep -aP "$@" "$testfile" 2>/dev/null | sha1sum)"
     if [[ "$origsum" != "$expcsum" ]]; then
-        wecho-bad "do-test '""$@"\'
+        wecho-bad "do-test $testfile '""$@"\'
         : $(( test_failed += 1 ))
     elif (( verbose > 0 )); then
-        wecho-ok "do-test '""$@"\'
+        wecho-ok "do-test $testfile '""$@"\'
     fi
 }
 
 test-all() {
+    rm -f test/*.in
+    touch test/empty.in
+    echo > test/single-line.in
+    echo -n ' ' > test/single-char.in
+    ./test/comb 5 'ab12.?*+^$\[] ' > test/comb.in
+    # cp test/comb test/binary.in # null chars inside lines
     for batch in "${tests[@]}"; do
         test_failed=0
         "$batch"
         if (( test_failed > 0 )); then
             wecho-bad "$batch failed on $test_failed test(s)"
+            wecho
             : $(( batch_failed += 1 ))
         elif (( verbose > 0 )); then
             wecho-ok "$batch passed"
