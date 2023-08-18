@@ -7,23 +7,24 @@ enum {
 
 char buf[N];
 
-void generate(int i, int length, const char *charset) {
-    if (i == length) {
-        printf("%s\n", buf);
+void generate(int i, int maxlength, const char *charset) {
+    buf[i] = '\0';
+    printf("%s\n", buf);
+    if (i == maxlength)
         return;
-    }
-    for (const char *s = charset; *s != '\0'; s++) {
+    const char *s;
+    for (s = charset; *s != '\0'; s++) {
         buf[i] = *s;
-        generate(i+1, length, charset);
+        generate(i+1, maxlength, charset);
     }
 }
 
 int main(int argc, char *argv[]) {
     if (argc != 3) {
-        fprintf(stderr, "Usage: %s length charset\n", argv[0]);
+        fprintf(stderr, "Usage: %s maxlength charset\n", argv[0]);
         exit(EXIT_FAILURE);
     }
-    int length = atoi(argv[1]);
-    generate(0, length, argv[2]);
+    int maxlength = atoi(argv[1]);
+    generate(0, maxlength, argv[2]);
     exit(EXIT_SUCCESS);
 }
