@@ -2,6 +2,7 @@
 
 tests=(
     test-substr
+    test-randsubstr
     test-prefix
     test-suffix
     test-closure
@@ -12,8 +13,6 @@ test-substr() {
     do-test ''
     do-test 'a'
     do-test 'z'
-    do-test '12'
-    do-test 'b  a '
     do-test '\.\.'
 }
 
@@ -27,6 +26,12 @@ test-suffix() {
     do-test '$'
     do-test '23$'
     do-test '\$\$$'
+}
+
+test-randsubstr() {
+    while read line; do
+        do-test "$line"
+    done < <(./test/make-sample 4 'ab12. ^$' | grep -Pv '.\^|\$.' | awk 'rand() < 0.02')
 }
 
 test-closure() {
