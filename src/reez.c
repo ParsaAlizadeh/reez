@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <string.h>
 
 #include "matcher.h"
 #include "re.h"
@@ -16,6 +17,8 @@ static int search_file(FILE *file, vector *regex, int *count) {
             (*count)++;
             if (!f_quiet && !f_count) {
                 printf("%s", line);
+                if (line[strlen(line)-1] != '\n')
+                    printf("\n");
             }
         }
     }
