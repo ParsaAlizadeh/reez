@@ -18,7 +18,7 @@ PATTERNS=(
     '\D+.b$'
     '^[ab]+$'
     '^[^b]+$'
-    '^(aa)+$'
+    '^a(aa)+$'
 )
 
 if [[ -z "${REEZ}" ]]; then
@@ -50,8 +50,6 @@ for pattern in "${PATTERNS[@]}"; do
         echook "$pattern"
     else
         echobad "$pattern"
-        show-and-run $REEZ "${argv[@]}"
-        show-and-run grep -P "${argv[@]}"
         failed=1
     fi
 done

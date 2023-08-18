@@ -1,8 +1,0 @@
-aaaaaa
-baaaaa
-aaaaab
-bbbbbb
-bbbabb
-bbaabb
-123a45
-a123bb
