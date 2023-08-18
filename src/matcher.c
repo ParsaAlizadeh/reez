@@ -15,18 +15,22 @@ int ismatch(const vector *regex, const char *text) {
     return _match_helper((RE *)regex->mem, text);
 }
 
+static int endoftext(int c) {
+    return c == '\0' || c == '\n' || c == '\r';
+}
+
 static int _match_helper(const RE *regex, const char *text) {
     if (is_RE(&regex[0]) && regex[0].control && regex[0].chr == '^')
         return _match_here(++regex, text);
     do {
         if (_match_here(regex, text))
             return 1;
-    } while (*(text++) != '\0');
+    } while (!endoftext(*(text++)));
     return 0;
 }
 
 static int _match_one(const RE *re, const char textchr) {
-    if (textchr == '\0')
+    if (endoftext(textchr))
         return 0;
     if (re->set)
         return _match_set(re, textchr);
@@ -42,10 +46,10 @@ static int _match_set(const RE *re, const char textchr) {
 }
 
 static int _match_here(const RE *regex, const char *text) {
-    if (!is_RE(&regex[0]))
+    if (!is_RE(&regex[0]))  /* check for null RE at the end of vector */
         return 1;
     if (regex[0].control && regex[0].chr == '$')
-        return text[0] == '\0' || text[0] == '\n';
+        return endoftext(text[0]);
     if (regex[0].closure == RE_STAR || regex[0].closure == RE_PLUS)
         return _match_star(regex + 1, text, &regex[0]);
     if (regex[0].closure == RE_MAYBE)
