@@ -2,3 +2,4 @@
 /reez
 test/comb
 test/*.in
+test/*.out

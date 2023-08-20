@@ -35,10 +35,12 @@ test-suffix() {
 }
 
 test-randsubstr() {
-    ./test/comb 4 'ab12. ^$' | grep -Pv '.\^|\$.' | awk 'rand() < 0.02' | \
-        while read line; do
-            do-test test/comb.in "$line"
-        done
+    for f in test/*.in; do
+        ./test/comb 4 'ab12. ^$' | grep -Pv '.\^|\$.' | awk 'rand() < 0.02' | \
+            while read line; do
+                do-test $f "$line"
+            done
+    done
 }
 
 test-closure() {
@@ -68,24 +70,24 @@ test_failed=0
 batch_failed=0
 
 do-test() {
-    local origsum expcsum
     local -r testfile="$1"; shift
-    origsum="$(./reez "$@" "$testfile" 2>/dev/null | sha1sum)"
-    expcsum="$(grep -aP "$@" "$testfile" 2>/dev/null | sha1sum)"
-    if [[ "$origsum" != "$expcsum" ]]; then
-        wecho-bad "do-test $testfile '""$@"\'
+    ./reez "$@" "$testfile" 2>/dev/null >test/reez.out
+    grep -aP "$@" "$testfile" 2>/dev/null >test/grep.out
+    if ! cmp -s test/reez.out test/grep.out; then
+        wecho-bad "do-test $testfile '$@': files differ"
         : $(( test_failed += 1 ))
     elif (( verbose > 0 )); then
-        wecho-ok "do-test $testfile '""$@"\'
+        wecho-ok "do-test $testfile '$@'"
     fi
 }
 
 test-all() {
-    rm -f test/*.in
+    rm -f test/*.in test/*.out
     touch test/empty.in
     echo > test/single-line.in
     echo -n ' ' > test/single-char.in
-    ./test/comb 5 'ab12.?*+^$\[] ' > test/comb.in
+    ./test/comb 5 'abz0129' > test/comb-char.in
+    ./test/comb 5 "$(echo -e 'a1.?*+^$\[] \t')" > test/comb-special.in
     # cp test/comb test/binary.in # null chars inside lines
     for batch in "${tests[@]}"; do
         test_failed=0
@@ -104,6 +106,7 @@ test-all() {
     else
         wecho-ok "passed"
     fi
+    rm -f test/*.in test/*.out
 }
 
 C_GREEN='\e[1;32m'
