@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -fsanitize=address -g3 -O2
+CFLAGS = -Wall -Wextra -fsanitize=address -g3 -O2 -p
 PROGRAM = reez
 SOURCES = ${wildcard src/*.c src/**/*.c}
 OBJECTS = ${patsubst src/%.c,build/%.o,${SOURCES}}

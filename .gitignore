@@ -1,5 +1,6 @@
 /build
 /reez
-test/comb
-test/*.in
-test/*.out
+/test/comb
+/test/*.in
+/test/*.out
+/gmon.out
