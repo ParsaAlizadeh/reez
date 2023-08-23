@@ -106,7 +106,7 @@ test-all() {
     else
         wecho-ok "passed"
     fi
-    rm -f test/*.in test/*.out
+    rm -f test/*.out
 }
 
 C_GREEN='\e[1;32m'
