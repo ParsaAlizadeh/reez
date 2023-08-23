@@ -96,7 +96,3 @@ vector *RE_compile(const char *regex) {
     }
     return vec;
 }
-
-int is_RE(const RE *re) {
-    return re->chr != '\0' || re->set != NULL;
-}

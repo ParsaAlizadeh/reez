@@ -5,9 +5,6 @@
 #include "re.h"
 
 static int _match_helper(const RE *regex, const char *text);
-static int _match_one(const RE *re, const char textchr);
-static int _match_set(const RE *re, const char textchr);
-static int _match_here(const RE *regex, const char *text);
 static int _match_star(const RE *regex, const char *text, const RE *re);
 static int _match_maybe(const RE *regex, const char *text, const RE *re);
 
@@ -15,26 +12,8 @@ int ismatch(const vector *regex, const char *text) {
     return _match_helper((RE *)regex->mem, text);
 }
 
-static int endoftext(int c) {
+inline static int endoftext(int c) {
     return c == '\0' || c == '\n' || c == '\r';
-}
-
-static int _match_helper(const RE *regex, const char *text) {
-    if (is_RE(&regex[0]) && regex[0].control && regex[0].chr == '^')
-        return _match_here(++regex, text);
-    do {
-        if (_match_here(regex, text))
-            return 1;
-    } while (!endoftext(*(text++)));
-    return 0;
-}
-
-static int _match_one(const RE *re, const char textchr) {
-    if (endoftext(textchr))
-        return 0;
-    if (re->set)
-        return _match_set(re, textchr);
-    return (re->control && re->chr == '.') || re->chr == textchr;
 }
 
 static int _match_set(const RE *re, const char textchr) {
@@ -43,6 +22,14 @@ static int _match_set(const RE *re, const char textchr) {
             return !re->exclude;
     }
     return re->exclude;
+}
+
+inline static int _match_one(const RE *re, const char textchr) {
+    if (endoftext(textchr))
+        return 0;
+    if (re->set)
+        return _match_set(re, textchr);
+    return (re->control && re->chr == '.') || re->chr == textchr;
 }
 
 static int _match_here(const RE *regex, const char *text) {
@@ -56,6 +43,16 @@ static int _match_here(const RE *regex, const char *text) {
         return _match_maybe(regex + 1, text, &regex[0]);
     if (_match_one(&regex[0], text[0]))
         return _match_here(++regex, ++text);
+    return 0;
+}
+
+static int _match_helper(const RE *regex, const char *text) {
+    if (is_RE(&regex[0]) && regex[0].control && regex[0].chr == '^')
+        return _match_here(++regex, text);
+    do {
+        if (_match_here(regex, text))
+            return 1;
+    } while (!endoftext(*(text++)));
     return 0;
 }
 

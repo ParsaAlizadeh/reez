@@ -1,6 +1,7 @@
 #ifndef RE_H
 #define RE_H
 
+#include <stdlib.h>
 #include "vector.h"
 
 #define RE_DIGITS "0123456789"
@@ -27,11 +28,11 @@ typedef struct RE {
  * compiles a regular expression into a vector of REs. on error returns
  * NULL.
  */
-vector *RE_compile(const char *regex);
+extern vector *RE_compile(const char *regex);
 
 /*
  * some REs don't hold any information. like the last element of the vector
  */
-int is_RE(const RE *re);
+#define is_RE(re) ((re)->chr != '\0' || (re)->set != NULL)
 
 #endif
