@@ -64,5 +64,5 @@ static int _match_star(const RE *re, const char *text, const RE *cur) {
 static int _match_maybe(const RE *re, const char *text, const RE *cur) {
     if (_match_here(re, text))
         return 1;
-    return _match_one(cur, text[0]) && _match_here(re, ++text);
+    return _match_one(cur, *text) && _match_here(re, ++text);
 }
