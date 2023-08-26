@@ -2,28 +2,36 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "eprintf.h"
 
 static const RE _RE_DEFAULT = {
-    .chr = '\0',
-    .control = 0,
+    .c = '\0',
+    .flags = 0,
     .closure = RE_ONCE,
-    .exclude = 0,
-    .set = NULL
+    .set = NULL,
+    .next = NULL,
 };
+
+static RE *_RE_edup(const RE *s) {
+    RE *re = emalloc(sizeof(RE));
+    memcpy(re, s, sizeof(RE));
+    return re;
+}
 
 static int _compile_escape(const char *regex, RE *re) {
     if (regex[1] == '\0')
         return -1;
     if (regex[1] == 't') {
-        re->chr = '\t';
+        re->c = '\t';
         return 0;
     }
     if (regex[1] == 'd' || regex[1] == 'D') {
         re->set = RE_DIGITS;
-        re->exclude = regex[1] == 'D';
+        if (regex[1] == 'D')
+            re->flags |= RE_EXCLUDE;
         return 0;
     }
-    re->chr = regex[1];
+    re->c = regex[1];
     return 0;
 }
 
@@ -49,18 +57,16 @@ static int _compile_set(const char *regex, RE *re) {
         return -1;
     if (regex[1] == '^') {
         regex += 2;
-        re->exclude = 1;
-    } else {
+        re->flags |= RE_EXCLUDE;
+    } else
         regex++;
-    }
     re->set = regex;
     return 0;
 }
 
-static int _compile_helper(const char *regex, vector *vec) {
-    if (!*regex) {
-        if (vector_push(vec, &_RE_DEFAULT) == NULL)
-            return -1;
+int RE_compile(const char *regex, RE **ret) {
+    if (*regex == '\0') {
+        *ret = NULL;
         return 0;
     }
     RE re = _RE_DEFAULT;
@@ -73,26 +79,23 @@ static int _compile_helper(const char *regex, vector *vec) {
             return -1;
         regex = strchr(regex, ']') + 1;
     } else {
-        re.chr = *regex;
-        if (strchr(RE_CONTROLS, *regex)) {
-            re.control = 1;
-        }
+        re.c = *regex;
+        if (strchr(RE_CONTROLS, *regex) != NULL)
+            re.flags |= RE_CONTROL;
         regex++;
     }
     if (_compile_closure(regex, &re) != -1)
         regex++;
-    if (vector_push(vec, &re) == NULL)
+    if (RE_compile(regex, &re.next) == -1)
         return -1;
-    return _compile_helper(regex, vec);
+    *ret = _RE_edup(&re);
+    return 0;
 }
 
-vector *RE_compile(const char *regex) {
-    vector *vec = vector_new(sizeof(RE));
-    if (vec == NULL)
-        return NULL;
-    if (_compile_helper(regex, vec) == -1) {
-        vector_free(vec);
-        return NULL;
+void RE_free(RE *re) {
+    RE *next;
+    for (; re != NULL; re = next) {
+        next = re->next;
+        free(re);
     }
-    return vec;
 }

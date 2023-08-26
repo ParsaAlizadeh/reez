@@ -2,37 +2,42 @@
 #define RE_H
 
 #include <stdlib.h>
-#include "vector.h"
 
 #define RE_DIGITS "0123456789"
 #define RE_CONTROLS ".^$"
 
-typedef enum REClosure {
+/* types of closures */
+enum REClosure {
     RE_ONCE,
     RE_MAYBE,
     RE_STAR,
     RE_PLUS,
-} REClosure;
+};
+
+/* flags */
+enum {
+    RE_CONTROL = 1 << 0,
+    RE_EXCLUDE = 1 << 2
+};
 
 /*
  * represents a single element of a regular expressions.
  */
-typedef struct RE {
-    char chr;
-    int control, exclude;
-    REClosure closure;
+typedef struct RE RE;
+
+struct RE {
+    char c;
+    int flags, closure;
     const char *set;
-} RE;
+    RE *next;
+};
 
 /*
  * compiles a regular expression into a vector of REs. on error returns
  * NULL.
  */
-extern vector *RE_compile(const char *regex);
+extern int RE_compile(const char *regex, RE **ret);
 
-/*
- * some REs don't hold any information. like the last element of the vector
- */
-#define is_RE(re) ((re)->chr != '\0' || (re)->set != NULL)
+extern void RE_free(RE *);
 
 #endif
