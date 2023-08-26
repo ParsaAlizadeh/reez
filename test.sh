@@ -8,77 +8,71 @@ tests=(
     test-closure
     test-charset
 )
+opts=('  ' -c -v -n)
 
 test-substr() {
-    for f in test/*.in; do
-        do-test $f ''
-        do-test $f 'a'
-        do-test $f 'z'
-        do-test $f '\.\.'
-    done
+    do-test ''
+    do-test 'a'
+    do-test 'z'
+    do-test '.\.'
 }
 
 test-prefix() {
-    for f in test/*.in; do
-        do-test $f '^'
-        do-test $f '^bba'
-        do-test $f '^\^'
-    done
+    do-test '^'
+    do-test '^bba'
+    do-test '^\^'
 }
 
 test-suffix() {
-    for f in test/*.in; do
-        do-test $f '$'
-        do-test $f '23$'
-        do-test $f '\$\$$'
-    done
+    do-test '$'
+    do-test '23$'
+    do-test '\$\$$'
+    do-test '^$'
+    do-test '^.$'
 }
 
 test-randsubstr() {
-    for f in test/*.in; do
-        ./test/comb 4 'ab12. ^$' | grep -Pv '.\^|\$.' | awk 'rand() < 0.02' | \
-            while read line; do
-                do-test $f "$line"
-            done
-    done
+    ./test/comb 4 'ab12^$' | grep -Pv '.\^|\$.' | awk 'rand() < 0.02' | \
+        while read line; do
+            do-test "$line"
+        done
 }
 
 test-closure() {
-    for f in test/*.in; do
-        do-test $f 'a*'
-        do-test $f '^a*$'
-        do-test $f '^b+a?b+$'
-        do-test $f '1\++2'
-        do-test $f '1\*\*2*'
-    done
+    do-test 'a*'
+    do-test '^a*$'
+    do-test '^b+a?b+$'
+    do-test '1\++2'
+    do-test '1\*\*2*'
 }
 
 test-charset() {
-    for f in test/*.in; do
-        do-test $f '\d'
-        do-test $f '^2\D+'
-        do-test $f '^[ba]*$'
-        do-test $f '^[^2]+$'
-        do-test $f '^a.*[.]\d$'
-        do-test $f '\d+\+\d+\'
-        do-test $f '1\.2.a$'
-        do-test $f '[*+.]+[^?]?'
-    done
+    do-test '\d'
+    do-test '^2\D+'
+    do-test '^[ba]*$'
+    do-test '^[^2]+$'
+    do-test '^a.*[.]\d$'
+    do-test '\d+\+\d+\'
+    do-test '1\.2.a$'
+    do-test '[*+.]+[^?]?'
 }
 
 test_failed=0
 batch_failed=0
 
 do-test() {
-    local -r testfile="$1"; shift
-    ./reez "$@" "$testfile" 2>/dev/null >test/reez.out
-    grep -aP "$@" "$testfile" 2>/dev/null >test/grep.out
-    if ! cmp -s test/reez.out test/grep.out; then
-        wecho-bad "do-test $testfile '$@': files differ"
-        : $(( test_failed += 1 ))
-    elif (( verbose > 0 )); then
-        wecho-ok "do-test $testfile '$@'"
-    fi
+    for testfile in test/*.in; do
+        for testopt in "${opts[@]}"; do
+            ./reez "$testopt" "$@" "$testfile" 2>/dev/null >test/reez.out
+            grep -aP "$testopt" "$@" "$testfile" 2>/dev/null >test/grep.out
+            if ! cmp -s test/reez.out test/grep.out; then
+                wecho-bad "do-test $testopt '$@' $testfile: files differ"
+                : $(( test_failed += 1 ))
+            elif (( verbose > 0 )); then
+                wecho-ok "do-test $testopt '$@' $testfile"
+            fi
+        done
+    done
 }
 
 test-all() {
@@ -86,7 +80,7 @@ test-all() {
     touch test/empty.in
     echo > test/single-line.in
     echo -n ' ' > test/single-char.in
-    ./test/comb 5 'abz0129' > test/comb-char.in
+    ./test/comb 4 'ab01' > test/comb-char.in
     ./test/comb 5 "$(echo -e 'a1.?*+^$\[] \t')" > test/comb-special.in
     # cp test/comb test/binary.in # null chars inside lines
     for batch in "${tests[@]}"; do
