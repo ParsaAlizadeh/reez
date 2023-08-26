@@ -4,6 +4,9 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+void setprogname(const char *);
+const char *getprogname(void);
+
 /*
  * print into stderr. eprintf runs exit(2) at the end. if last character of
  * fmt is ':', strerror(errno) will also be printed. always prints \n at

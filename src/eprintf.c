@@ -6,8 +6,20 @@
 #include <string.h>
 #include <errno.h>
 
+static const char *progname = NULL;
+
+void setprogname(const char *s) {
+    progname = s;
+}
+
+const char *getprogname(void) {
+    return progname;
+}
+
 void vweprintf(const char *fmt, va_list ap) {
     fflush(stdout);
+    if (getprogname() != NULL)
+        fprintf(stderr, "%s: ", getprogname());
     vfprintf(stderr, fmt, ap);
     if (fmt[strlen(fmt)-1] == ':')
         fprintf(stderr, " %s", strerror(errno));
@@ -26,8 +38,7 @@ void eprintf(const char *fmt, ...) {
     va_start(ap, fmt);
     vweprintf(fmt, ap);
     va_end(ap);
-    if (errno != 0)
-        exit(2);
+    exit(2);
 }
 
 void *emalloc(size_t size) {

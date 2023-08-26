@@ -4,6 +4,7 @@
 #include <getopt.h>
 #include <string.h>
 
+#include "eprintf.h"
 #include "matcher.h"
 #include "re.h"
 
@@ -29,12 +30,12 @@ static int search_file(FILE *file, vector *regex, int *count) {
     return 0;
 }
 
-static void print_usage_exit(char *prog) {
-    fprintf(stderr, "Usage: %s [-qvc] <pattern> <filename> [<filename>...]\n", prog);
-    exit(EXIT_FAILURE);
+static void eprint_usage(char *prog) {
+    eprintf("Usage: %s [-qvc] <pattern> <filename> [<filename>...]", prog);
 }
 
 int main(int argc, char *argv[]) {
+    setprogname(argv[0]);
     int opt;
     while ((opt = getopt(argc, argv, "qvc")) != -1) {
         switch (opt) {
@@ -48,32 +49,25 @@ int main(int argc, char *argv[]) {
             f_count = 1;
             break;
         default:
-            print_usage_exit(argv[0]);
+            eprint_usage(argv[0]);
         }
     }
-    if (argc < optind + 2) {
-        print_usage_exit(argv[0]);
-    }
+    if (argc < optind + 2)
+        eprint_usage(argv[0]);
     vector *regex;
-    if (!(regex = RE_compile(argv[optind++]))) {
-        fprintf(stderr, "failed to compile the pattern\n");
-        exit(EXIT_FAILURE);
-    }
+    if ((regex = RE_compile(argv[optind++])) == NULL)
+        eprintf("failed to compile the pattern");
     int count = 0;
     for (; optind < argc; optind++) {
         FILE *file = fopen(argv[optind], "r");
-        if (!file) {
-            err(EXIT_FAILURE, "failed to open %s", argv[optind]);
+        if (file == NULL) {
+            weprintf("can not open \"%s\":", argv[optind]);
+            continue;
         }
         search_file(file, regex, &count);
     }
     vector_free(regex);
-    if (!f_quiet && f_count) {
+    if (!f_quiet && f_count)
         printf("%d\n", count);
-    }
-    if (count == 0) {
-        fprintf(stderr, "found nothing\n");
-        return EXIT_FAILURE;
-    }
-    return EXIT_SUCCESS;
+    return count == 0;
 }
