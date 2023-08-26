@@ -66,10 +66,10 @@ do-test() {
             ./reez "$testopt" "$@" "$testfile" 2>/dev/null >test/reez.out
             grep -aP "$testopt" "$@" "$testfile" 2>/dev/null >test/grep.out
             if ! cmp -s test/reez.out test/grep.out; then
-                wecho-bad "do-test $testopt '$@' $testfile: files differ"
+                weprintf "do-test %2s %-15s %-25s: files differ" "$testopt" "'$*'" "$testfile"
                 : $(( test_failed += 1 ))
             elif (( verbose > 0 )); then
-                wecho-ok "do-test $testopt '$@' $testfile"
+                wprintf "do-test %2s %-15s %-25s" "$testopt" "'$*'" "$testfile"
             fi
         done
     done
@@ -87,18 +87,16 @@ test-all() {
         test_failed=0
         "$batch"
         if (( test_failed > 0 )); then
-            wecho-bad "$batch failed on $test_failed test(s)"
-            wecho
+            weprintf '%s failed on %d test(s)\n' "$batch" "$test_failed"
             : $(( batch_failed += 1 ))
         elif (( verbose > 0 )); then
-            wecho-ok "$batch passed"
-            wecho
+            wprintf '%s passed\n' "$batch"
         fi
     done
     if (( batch_failed > 0 )); then
-        wecho-bad "failed on $batch_failed batche(s)"
+        weprintf 'failed on %d batch(es)' "$batch_failed"
     else
-        wecho-ok "passed"
+        wprintf 'passed all batches'
     fi
     rm -f test/*.out
 }
@@ -107,20 +105,18 @@ C_GREEN='\e[1;32m'
 C_RED='\e[1;31m'
 C_RESET='\e[0m'
 
-wecho-ok() {
-    wecho -e "${C_GREEN}OK: ""$@""${C_RESET}"
+weprintf() {
+    local -r fmt="$1"; shift
+    wprintf "${C_RED}${fmt}${C_RESET}" "$@"
 }
 
-wecho-bad() {
-    wecho -e "${C_RED}BAD: ""$@""${C_RESET}"
-}
-
-wecho() {
-    echo >&2 "$@"
+wprintf() {
+    local -r fmt="$1"; shift
+    printf >&2 "$fmt\n" "$@"
 }
 
 usage() {
-    wecho "Usage: $0 [-h] [-v]"
+    wprintf 'Usage: %s [-h] [-v]' "$0"
     exit 1
 }
 
