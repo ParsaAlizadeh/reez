@@ -43,7 +43,7 @@ static int _match_here(const RE *re, const char *text) {
 
 static int _match_helper(const RE *re, const char *text) {
     if (re != NULL && RE_iscontrol(re) && re->c == '^')
-        return _match_here(++re, text);
+        return _match_here(re->next, text);
     do {
         if (_match_here(re, text))
             return 1;
