@@ -66,7 +66,8 @@ static int _compile_set(const char *regex, RE *re) {
 
 int RE_compile(const char *regex, RE **ret) {
     if (*regex == '\0') {
-        *ret = NULL;
+        if (ret != NULL)
+            *ret = NULL;
         return 0;
     }
     RE re = _RE_DEFAULT;
