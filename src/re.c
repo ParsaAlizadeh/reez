@@ -65,33 +65,37 @@ static int _compile_set(const char *regex, RE *re) {
 }
 
 int RE_compile(const char *regex, RE **ret) {
-    if (*regex == '\0') {
-        if (ret != NULL)
-            *ret = NULL;
-        return 0;
+    RE *rep = NULL;
+    RE **repp = &rep;
+    while (*regex != '\0') {
+        RE re = _RE_DEFAULT;
+        if (*regex == '\\') {
+            if (_compile_escape(regex, &re) == -1)
+                goto fail;
+            regex += 2;
+        } else if (*regex == '[') {
+            if (_compile_set(regex, &re) == -1)
+                goto fail;
+            regex = strchr(regex, ']') + 1;
+        } else {
+            re.c = *regex;
+            if (strchr(RE_CONTROLS, *regex) != NULL)
+                re.flags |= RE_CONTROL;
+            regex++;
+        }
+        if (_compile_closure(regex, &re) != -1)
+            regex++;
+        *repp = _RE_edup(&re);
+        repp = &(*repp)->next;
     }
-    RE re = _RE_DEFAULT;
-    if (*regex == '\\') {
-        if (_compile_escape(regex, &re) == -1)
-            return -1;
-        regex += 2;
-    } else if (*regex == '[') {
-        if (_compile_set(regex, &re) == -1)
-            return -1;
-        regex = strchr(regex, ']') + 1;
-    } else {
-        re.c = *regex;
-        if (strchr(RE_CONTROLS, *regex) != NULL)
-            re.flags |= RE_CONTROL;
-        regex++;
-    }
-    if (_compile_closure(regex, &re) != -1)
-        regex++;
-    if (RE_compile(regex, &re.next) == -1)
-        return -1;
-    if (ret != NULL)
-        *ret = _RE_edup(&re);
+    if (ret == NULL)
+        RE_free(rep);
+    else
+        *ret = rep;
     return 0;
+fail:
+    RE_free(rep);
+    return -1;
 }
 
 void RE_free(RE *re) {
