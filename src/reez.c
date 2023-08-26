@@ -6,7 +6,6 @@
 
 #include "eprintf.h"
 #include "matcher.h"
-#include "re.h"
 
 enum {
     OPT_INVERT = 1 << 0,
@@ -23,7 +22,7 @@ static int isquiet(int opts) {
     return (opts & OPT_QUIET) || (opts & OPT_COUNT);
 }
 
-static int search_file(FILE *file, vector *regex, const char *filename, int opts) {
+static int search_file(FILE *file, const RE *re, const char *filename, int opts) {
     int nmatch = 0;
     char *buf = NULL;
     size_t nbuf = 0;
@@ -31,7 +30,7 @@ static int search_file(FILE *file, vector *regex, const char *filename, int opts
         int n = strlen(buf);
         if (buf[n-1] == '\n')
             buf[n-1] = '\0';
-        if (isinvert(opts) ^ ismatch(regex, buf)) {
+        if (isinvert(opts) ^ ismatch(re, buf)) {
             nmatch++;
             if (!isquiet(opts)) {
                 if (filename != NULL)
@@ -73,8 +72,8 @@ int main(int argc, char *argv[]) {
     }
     if (argc < optind + 2)
         eprint_usage(argv[0]);
-    vector *regex;
-    if ((regex = RE_compile(argv[optind++])) == NULL)
+    RE *re;
+    if (RE_compile(argv[optind++], &re) == -1)
         eprintf("failed to compile the pattern");
     int nfile = argc - optind;
     int nmatch = 0;
@@ -84,10 +83,10 @@ int main(int argc, char *argv[]) {
             weprintf("can not open \"%s\":", argv[optind]);
             continue;
         }
-        nmatch += search_file(file, regex, nfile > 1 ? argv[optind] : NULL, optmask);
+        nmatch += search_file(file, re, nfile > 1 ? argv[optind] : NULL, optmask);
         (void)fclose(file);
     }
-    vector_free(regex);
+    RE_free(re);
     if (optmask & OPT_COUNT)
         printf("%d\n", nmatch);
     return nmatch == 0;

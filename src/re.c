@@ -88,7 +88,8 @@ int RE_compile(const char *regex, RE **ret) {
         regex++;
     if (RE_compile(regex, &re.next) == -1)
         return -1;
-    *ret = _RE_edup(&re);
+    if (ret != NULL)
+        *ret = _RE_edup(&re);
     return 0;
 }
 

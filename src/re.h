@@ -33,8 +33,8 @@ struct RE {
 };
 
 /*
- * compiles a regular expression into a vector of REs. on error returns
- * NULL.
+ * compiles a regular expression. if ret is not null, set *ret to the
+ * resulting regex. on compile error returns -1.
  */
 extern int RE_compile(const char *regex, RE **ret);
 
