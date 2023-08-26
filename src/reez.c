@@ -8,45 +8,64 @@
 #include "matcher.h"
 #include "re.h"
 
-static int f_invert = 0, f_count = 0, f_quiet = 0;
+enum {
+    OPT_INVERT = 1 << 0,
+    OPT_COUNT = 1 << 1,
+    OPT_QUIET = 1 << 2,
+    OPT_LINENO = 1 << 3
+};
 
-static int search_file(FILE *file, vector *regex, int *count) {
-    char *line = NULL;
-    size_t n_line = 0;
-    while (getline(&line, &n_line, file) >= 0) {
-        if (f_invert ^ ismatch(regex, line)) {
-            (*count)++;
-            if (!f_quiet && !f_count) {
-                printf("%s", line);
-                if (line[strlen(line)-1] != '\n')
-                    printf("\n");
+static int isinvert(int opts) {
+    return (opts & OPT_INVERT) != 0;
+}
+
+static int isquiet(int opts) {
+    return (opts & OPT_QUIET) || (opts & OPT_COUNT);
+}
+
+static int search_file(FILE *file, vector *regex, const char *filename, int opts) {
+    int nmatch = 0;
+    char *buf = NULL;
+    size_t nbuf = 0;
+    for (int lineno = 1; getline(&buf, &nbuf, file) >= 0; lineno++) {
+        int n = strlen(buf);
+        if (buf[n-1] == '\n')
+            buf[n-1] = '\0';
+        if (isinvert(opts) ^ ismatch(regex, buf)) {
+            nmatch++;
+            if (!isquiet(opts)) {
+                if (filename != NULL)
+                    printf("%s:", filename);
+                if (opts & OPT_LINENO)
+                    printf("%d:", lineno);
+                printf("%s\n", buf);
             }
         }
     }
-    (void)fclose(file);
-    if (line) {
-        free(line);
-    }
-    return 0;
+    free(buf);
+    return nmatch;
 }
 
 static void eprint_usage(char *prog) {
-    eprintf("Usage: %s [-qvc] <pattern> <filename> [<filename>...]", prog);
+    eprintf("Usage: %s [-qvcn] <pattern> <filename> [<filename>...]", prog);
 }
 
 int main(int argc, char *argv[]) {
     setprogname(argv[0]);
-    int opt;
-    while ((opt = getopt(argc, argv, "qvc")) != -1) {
+    int opt, optmask = 0;
+    while ((opt = getopt(argc, argv, "qvcn")) != -1) {
         switch (opt) {
         case 'q':
-            f_quiet = 1;
+            optmask |= OPT_QUIET;
             break;
         case 'v':
-            f_invert = 1;
+            optmask |= OPT_INVERT;
             break;
         case 'c':
-            f_count = 1;
+            optmask |= OPT_COUNT;
+            break;
+        case 'n':
+            optmask |= OPT_LINENO;
             break;
         default:
             eprint_usage(argv[0]);
@@ -57,17 +76,19 @@ int main(int argc, char *argv[]) {
     vector *regex;
     if ((regex = RE_compile(argv[optind++])) == NULL)
         eprintf("failed to compile the pattern");
-    int count = 0;
+    int nfile = argc - optind;
+    int nmatch = 0;
     for (; optind < argc; optind++) {
         FILE *file = fopen(argv[optind], "r");
         if (file == NULL) {
             weprintf("can not open \"%s\":", argv[optind]);
             continue;
         }
-        search_file(file, regex, &count);
+        nmatch += search_file(file, regex, nfile > 1 ? argv[optind] : NULL, optmask);
+        (void)fclose(file);
     }
     vector_free(regex);
-    if (!f_quiet && f_count)
-        printf("%d\n", count);
-    return count == 0;
+    if (optmask & OPT_COUNT)
+        printf("%d\n", nmatch);
+    return nmatch == 0;
 }
