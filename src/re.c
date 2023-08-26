@@ -99,3 +99,11 @@ void RE_free(RE *re) {
         free(re);
     }
 }
+
+int RE_isexclude(const RE *re) {
+    return (re->flags & RE_EXCLUDE) != 0;
+}
+
+int RE_iscontrol(const RE *re) {
+    return (re->flags & RE_CONTROL) != 0;
+}

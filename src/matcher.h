@@ -1,13 +1,12 @@
 #ifndef MATCHER_H
 #define MATCHER_H
 
-#include "vector.h"
+#include "re.h"
 
 /*
- * given a compile regex as a vector of REs, searches that pattern inside
- * text. '\n' and '\0' are both considered as the end of the text. vector
- * remains untouched.
+ * given a compile regex, searches that pattern inside text. regex remains
+ * untouched.
  */
-int ismatch(const vector *regex, const char *text);
+int ismatch(const RE *re, const char *text);
 
 #endif

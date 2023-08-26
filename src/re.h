@@ -39,5 +39,7 @@ struct RE {
 extern int RE_compile(const char *regex, RE **ret);
 
 extern void RE_free(RE *);
+extern int RE_isexclude(const RE *);
+extern int RE_iscontrol(const RE *);
 
 #endif
