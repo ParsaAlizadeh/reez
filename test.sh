@@ -32,10 +32,9 @@ test-suffix() {
 }
 
 test-randsubstr() {
-    ./test/comb 4 'a1. ^$' | grep -Pv '.\^|\$.' | awk 'rand() < 0.02' | \
-        while read line; do
-            do-test "$line"
-        done
+    while read line; do
+        do-test "$line"
+    done < <(./test/comb 4 'a1. ^$' | grep -Pv '.\^|\$.' | awk 'rand() < 0.02')
 }
 
 test-closure() {
@@ -64,10 +63,9 @@ max_ms=0
 
 do-test() {
     local cur_ms fmt logitem
-    fmt="do-test %2s %-15s %-25s %3d ms"
+    fmt="do-test %2s %-15s %-25s %4d ms"
     for testfile in test/*.in; do
         for testopt in "${opts[@]}"; do
-            # SIGINT won't be catched by background jobs, so I can stop tests with single ^C
             grep --text --perl-regexp "$testopt" "$@" "$testfile" 2>/dev/null >test/grep.out
             /bin/time --quiet --format 'time: %U' -- ./reez "$testopt" "$@" "$testfile" >test/reez.out 2>test/reez.err
             cur_ms="$(awk '/^time/ { print 1000 * $2 }' test/reez.err)"
@@ -97,7 +95,6 @@ test-all() {
     for batch in "${tests[@]}"; do
         test_failed=0
         "$batch"
-        echo $max_ms
         if (( test_failed > 0 )); then
             weprintf '%s failed on %d test(s)\n' "$batch" "$test_failed"
             : $(( batch_failed += 1 ))
