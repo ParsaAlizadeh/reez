@@ -8,7 +8,7 @@ tests=(
     test-closure
     test-charset
 )
-opts=('  ' -c -v -n)
+opts=('' -c -v -n)
 
 test-substr() {
     do-test ''
@@ -32,7 +32,7 @@ test-suffix() {
 }
 
 test-randsubstr() {
-    ./test/comb 4 'ab12^$' | grep -Pv '.\^|\$.' | awk 'rand() < 0.02' | \
+    ./test/comb 4 'a1. ^$' | grep -Pv '.\^|\$.' | awk 'rand() < 0.02' | \
         while read line; do
             do-test "$line"
         done
@@ -44,6 +44,7 @@ test-closure() {
     do-test '^b+a?b+$'
     do-test '1\++2'
     do-test '1\*\*2*'
+    do-test 'a*a*a*a*$'
 }
 
 test-charset() {
@@ -59,17 +60,27 @@ test-charset() {
 
 test_failed=0
 batch_failed=0
+max_ms=0
 
 do-test() {
+    local cur_ms fmt logitem
+    fmt="do-test %2s %-15s %-25s %3d ms"
     for testfile in test/*.in; do
         for testopt in "${opts[@]}"; do
-            ./reez "$testopt" "$@" "$testfile" 2>/dev/null >test/reez.out
-            grep -aP "$testopt" "$@" "$testfile" 2>/dev/null >test/grep.out
+            # SIGINT won't be catched by background jobs, so I can stop tests with single ^C
+            grep --text --perl-regexp "$testopt" "$@" "$testfile" 2>/dev/null >test/grep.out
+            /bin/time --quiet --format 'time: %U' -- ./reez "$testopt" "$@" "$testfile" >test/reez.out 2>test/reez.err
+            cur_ms="$(awk '/^time/ { print 1000 * $2 }' test/reez.err)"
+            max_ms="$(( cur_ms > max_ms ? cur_ms : max_ms ))"
+            logitem=("$testopt" "'$*'" "$testfile" "$cur_ms")
             if ! cmp -s test/reez.out test/grep.out; then
-                weprintf "do-test %2s %-15s %-25s: files differ" "$testopt" "'$*'" "$testfile"
+                weprintf "$fmt    files differ" "${logitem[@]}"
+                : $(( test_failed += 1 ))
+            elif grep --quiet 'ERROR:' test/reez.err; then
+                weprintf "$fmt    sanitizer error" "${logitem[@]}"
                 : $(( test_failed += 1 ))
             elif (( verbose > 0 )); then
-                wprintf "do-test %2s %-15s %-25s" "$testopt" "'$*'" "$testfile"
+                wprintf "$fmt" "${logitem[@]}"
             fi
         done
     done
@@ -86,6 +97,7 @@ test-all() {
     for batch in "${tests[@]}"; do
         test_failed=0
         "$batch"
+        echo $max_ms
         if (( test_failed > 0 )); then
             weprintf '%s failed on %d test(s)\n' "$batch" "$test_failed"
             : $(( batch_failed += 1 ))
@@ -98,6 +110,7 @@ test-all() {
     else
         wprintf 'passed all batches'
     fi
+    wprintf 'maximum time %d ms' "$max_ms"
     rm -f test/*.out
 }
 

@@ -3,4 +3,5 @@
 /test/comb
 /test/*.in
 /test/*.out
+/test/*.err
 /gmon.out
