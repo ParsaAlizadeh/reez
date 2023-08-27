@@ -1,16 +1,12 @@
 #include "vector.h"
 
-#include <stdlib.h>
 #include <string.h>
-#include <errno.h>
+#include "eprintf.h"
 
-int vector_incrcap(vector *vec, size_t newcap) {
-    void *newmem = realloc(vec->mem, newcap * vec->nbyte);
-    if (newmem == NULL)
-        return -1;
+static void vector_incrcap(vector *vec, size_t newcap) {
+    void *newmem = erealloc(vec->mem, newcap * vec->nbyte);
     vec->mem = newmem;
     vec->cap = newcap;
-    return 0;
 }
 
 static void _vector_init(vector *vec, size_t nbyte) {
@@ -21,9 +17,7 @@ static void _vector_init(vector *vec, size_t nbyte) {
 }
 
 vector *vector_new(size_t nbyte) {
-    vector *vec = malloc(sizeof(vector));
-    if (vec == NULL)
-        return NULL;
+    vector *vec = emalloc(sizeof(vector));
     _vector_init(vec, nbyte);
     return vec;
 }
@@ -43,8 +37,7 @@ void *vector_push(vector *vec, const void *src) {
         size_t newcap = 2 * vec->nelem;
         if (vec->nelem == 0)
             newcap = 1;
-        if (vector_incrcap(vec, newcap) == -1)
-            return NULL;
+        vector_incrcap(vec, newcap);
     }
     void *dest = _vector_unsafeat(vec, vec->nelem++);
     memcpy(dest, src, vec->nbyte);
@@ -52,6 +45,8 @@ void *vector_push(vector *vec, const void *src) {
 }
 
 void vector_free(vector *vec) {
+    if (vec == NULL)
+        return;
     free(vec->mem);
     free(vec);
 }

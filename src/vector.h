@@ -1,7 +1,7 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
-#include <sys/types.h>
+#include <stdlib.h>
 
 typedef struct vector {
     void *mem;      /* void mem[.nbyte * .cap] */
@@ -11,32 +11,30 @@ typedef struct vector {
 } vector;
 
 /*
- * on error returns NULL and set errno
+ * dynamic array of vec->nelem elements, each vec->nbyte bytes
  */
 vector *vector_new(size_t nbyte);
 
 /*
- * on error returns -1 and set errno
- */
-int vector_incrcap(vector *vec, size_t newcap);
-
-/*
- * given invalid index returns NULL
+ * returns element at a given index. checks for out of bound.
  */
 void *vector_at(vector *vec, size_t index);
 
 /*
- * copies nbyte from src to the end of vector. returns pointer to that
- * location (e.g. vector_at(vec, nelem)). on error returns NULL and set
- * errno */
+ * copies nbyte from src to the new element at the end of vector. returns
+ * pointer to that location (e.g. vector_at(vec, vec->nelem++)).
+ */
 void *vector_push(vector *vec, const void *src);
 
 /*
- * pops last element of the vector. if dest != NULL, copies nbyte that was
- * last element to dest. given empty vector returns -1.
+ * pops last element of the vector. if dest != NULL, copies the last
+ * element to dest. given empty vector returns -1.
  */
 int vector_pop(vector *vec, void *dest);
 
+/*
+ * accepts null.
+ */
 void vector_free(vector *vec);
 
 #endif
