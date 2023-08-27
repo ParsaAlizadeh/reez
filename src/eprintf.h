@@ -17,7 +17,7 @@ void weprintf(const char *fmt, ...);
 void eprintf(const char *fmt, ...);
 
 /*
- * run eprintf and stop the program if error happened.
+ * on error, run eprintf and stop the program.
  */
 void *emalloc(size_t);
 void *erealloc(void *, size_t);
