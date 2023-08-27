@@ -4,7 +4,7 @@
 #include "re.h"
 
 /*
- * given a compile regex, searches that pattern inside text. regex remains
+ * given a compiled regex, searches that pattern inside text. regex remains
  * untouched.
  */
 int ismatch(const RE *re, const char *text);

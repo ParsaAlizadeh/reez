@@ -12,10 +12,9 @@ int ismatch(const RE *re, const char *text) {
 }
 
 static int _match_set(const RE *re, const char textchr) {
-    for (const char *set = re->set; *set != '\0' && *set != ']'; set++) {
+    for (const char *set = re->set; *set != '\0' && *set != ']'; set++)
         if (*set == textchr)
             return !RE_isexclude(re);
-    }
     return RE_isexclude(re);
 }
 
