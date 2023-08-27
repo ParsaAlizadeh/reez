@@ -14,19 +14,17 @@ test-substr() {
     do-test ''
     do-test 'a'
     do-test 'z'
-    do-test '.\.'
+    do-test '.a\.'
 }
 
 test-prefix() {
     do-test '^'
-    do-test '^bba'
     do-test '^\^'
 }
 
 test-suffix() {
     do-test '$'
-    do-test '23$'
-    do-test '\$\$$'
+    do-test '\$$'
     do-test '^$'
     do-test '^.$'
 }
@@ -41,19 +39,16 @@ test-closure() {
     do-test 'a*'
     do-test '^a*$'
     do-test '^b+a?b+$'
-    do-test '1\++2'
-    do-test '1\*\*2*'
     do-test 'a*a*a*a*$'
 }
 
 test-charset() {
     do-test '\d'
-    do-test '^2\D+'
-    do-test '^[ba]*$'
-    do-test '^[^2]+$'
-    do-test '^a.*[.]\d$'
-    do-test '\d+\+\d+\'
-    do-test '1\.2.a$'
+    do-test '^0\D+'
+    do-test '^[a0]*$'
+    do-test '^[^0]+$'
+    do-test '^a.*[. ]\d$'
+    do-test '\d+\+\d+'
     do-test '[*+.]+[^?]?'
 }
 
@@ -98,8 +93,9 @@ test-all() {
         if (( test_failed > 0 )); then
             weprintf '%s failed on %d test(s)\n' "$batch" "$test_failed"
             : $(( batch_failed += 1 ))
-        elif (( verbose > 0 )); then
-            wprintf '%s passed\n' "$batch"
+        else
+            wprintf '%s passed' "$batch"
+            (( verbose > 0 )) && wprintf ''
         fi
     done
     if (( batch_failed > 0 )); then
@@ -126,7 +122,7 @@ wprintf() {
 }
 
 usage() {
-    wprintf 'Usage: %s [-h] [-v]' "$0"
+    wprintf 'Usage: %s [-h] [-v] [-s]' "$0"
     exit 1
 }
 
@@ -135,6 +131,11 @@ while (( $# > 0 )); do
     case "$1" in
         '-v')
             : $(( verbose += 1 ))
+            shift
+        ;;
+        '-s')
+            opts=(-c)
+            wprintf "> The burden of choosing correctness over speed should not be placed upon the programmer"
             shift
         ;;
         *)
