@@ -3,43 +3,37 @@
 
 #include <stdlib.h>
 
-#define RE_DIGITS "0123456789"
+#define RE_DIGITS "0123456789"  /* \d */
 #define RE_CONTROLS ".^$"
 
-/* types of closures */
 enum REClosure {
     RE_ONCE,
-    RE_MAYBE,
-    RE_STAR,
-    RE_PLUS,
+    RE_MAYBE,   /* c? */
+    RE_STAR,    /* c* */
+    RE_PLUS,    /* c+ */
 };
 
-/* flags */
-enum {
+enum REFlag {
     RE_CONTROL = 1 << 0,
     RE_EXCLUDE = 1 << 2
 };
 
-/*
- * represents a single element of a regular expressions.
- */
 typedef struct RE RE;
-
 struct RE {
     char c;
     int flags, closure;
-    const char *set;
+    const char *set;        /* [0-9] */
     RE *next;
 };
 
 /*
- * compiles a regular expression. if ret is not null, set *ret to the
- * resulting regex. on compile error returns -1.
+ * check for a valid regular expression. if ret is not null, set *ret to
+ * the resulting RE. on error returns -1.
  */
 extern int RE_compile(const char *regex, RE **ret);
 
-extern void RE_free(RE *);
-extern int RE_isexclude(const RE *);
+extern void RE_free(RE *);              /* accepts null */
+extern int RE_isexclude(const RE *);    /* [^a-z] */
 extern int RE_iscontrol(const RE *);
 
 #endif
