@@ -6,10 +6,12 @@
 
 static const RE _RE_DEFAULT = {
     .c = '\0',
+    .type = RE_TCHAR,
     .flags = 0,
     .closure = RE_ONCE,
     .set = NULL,
     .next = NULL,
+    .group = NULL
 };
 
 static RE *_RE_edup(const RE *s) {
@@ -18,73 +20,96 @@ static RE *_RE_edup(const RE *s) {
     return re;
 }
 
-static int _compile_escape(const char *regex, RE *re) {
-    if (regex[1] == '\0')
+static char *_regex = NULL;
+
+static char _peek(void) {
+    return *_regex;
+}
+
+static char _pop(void) {
+    if (_peek() == '\0')
+        return '\0';
+    return *(_regex++);
+}
+
+static void _unpop(char c) {
+    if (c != '\0')
+        _regex--;
+}
+
+static int _compile_escape(RE *re) {
+    _pop(); /* '\' */
+    char esc = _pop();
+    if (esc == '\0')
         return -1;
-    if (regex[1] == 't') {
+    if (esc == 't') {
         re->c = '\t';
         return 0;
     }
-    if (regex[1] == 'd' || regex[1] == 'D') {
+    if (esc == 'd' || esc == 'D') {
+        re->type = RE_TSET;
         re->set = RE_DIGITS;
-        if (regex[1] == 'D')
+        if (esc == 'D')
             re->flags |= RE_EXCLUDE;
         return 0;
     }
-    re->c = regex[1];
+    re->c = esc;
     return 0;
 }
 
-static int _compile_closure(const char *regex, RE *re) {
-    switch (*regex) {
-    case '?':
+static int _compile_closure(RE *re) {
+    char clo = _pop();
+    if (clo == '?')
         re->closure = RE_MAYBE;
-        return 0;
-    case '*':
+    else if (clo == '*')
         re->closure = RE_STAR;
-        return 0;
-    case '+':
+    else if (clo == '+')
         re->closure = RE_PLUS;
-        return 0;
-    default:
+    else {
+        _unpop(clo);
         return -1;
     }
-}
-
-static int _compile_set(const char *regex, RE *re) {
-    char *close = strchr(regex, ']');
-    if (!close)
-        return -1;
-    if (regex[1] == '^') {
-        regex += 2;
-        re->flags |= RE_EXCLUDE;
-    } else
-        regex++;
-    re->set = regex;
     return 0;
 }
 
-int RE_compile(const char *regex, RE **ret) {
-    RE *rep = NULL;
+static int _compile_set(RE *re) {
+    re->type = RE_TSET;
+    char *close = strchr(_regex, ']');
+    if (close == NULL)
+        return -1;
+    _pop(); /* '[' */
+    if (_peek() == '^') {
+        _pop();
+        re->flags |= RE_EXCLUDE;
+    }
+    re->set = _regex;
+    _regex = close + 1;
+    return 0;
+}
+
+static int _compile_group(RE **ret) {
+    RE *rep = NULL; /* final RE */
     RE **repp = &rep;
-    while (*regex != '\0') {
+    while (_peek() != '\0' && _peek() != ')') {
         RE re = _RE_DEFAULT;
-        if (*regex == '\\') {
-            if (_compile_escape(regex, &re) == -1)
+        if (_peek() == '\\') {
+            if (_compile_escape(&re) == -1)
                 goto fail;
-            regex += 2;
-        } else if (*regex == '[') {
-            if (_compile_set(regex, &re) == -1)
+        } else if (_peek() == '[') {
+            if (_compile_set(&re) == -1)
                 goto fail;
-            regex = strchr(regex, ']') + 1;
+        } else if (_peek() == '(') {
+            re.type = RE_TGROUP;
+            _pop(); /* '(' */
+            if (_compile_group(&re.group) == -1 || _peek() != ')')
+                goto fail;
+            _pop(); /* ')' */
         } else {
-            re.c = *regex;
-            if (strchr(RE_CONTROLS, *regex) != NULL)
-                re.flags |= RE_CONTROL;
-            regex++;
+            re.c = _pop();
+            if (strchr(RE_CONTROLS, re.c) != NULL)
+                re.type = RE_TCONTROL;
         }
-        if (_compile_closure(regex, &re) != -1)
-            regex++;
+        _compile_closure(&re);
         *repp = _RE_edup(&re);
         repp = &(*repp)->next;
     }
@@ -93,15 +118,21 @@ int RE_compile(const char *regex, RE **ret) {
     else
         *ret = rep;
     return 0;
-fail:
+ fail:
     RE_free(rep);
     return -1;
+}
+
+int RE_compile(const char *regex, RE **ret) {
+    _regex = (char *)regex;
+    return _compile_group(ret);
 }
 
 void RE_free(RE *re) {
     RE *next;
     for (; re != NULL; re = next) {
         next = re->next;
+        RE_free(re->group);
         free(re);
     }
 }
@@ -111,5 +142,5 @@ int RE_isexclude(const RE *re) {
 }
 
 int RE_iscontrol(const RE *re) {
-    return (re->flags & RE_CONTROL) != 0;
+    return re->type == RE_TCONTROL;
 }

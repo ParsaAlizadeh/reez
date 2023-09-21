@@ -6,6 +6,14 @@
 #define RE_DIGITS "0123456789"  /* \d */
 #define RE_CONTROLS ".^$"
 
+enum REType {
+    RE_TCHAR,
+    RE_TSET,
+    RE_TCONTROL,
+    RE_TGROUP,
+    RE_TBRANCH
+};
+
 enum REClosure {
     RE_ONCE,
     RE_MAYBE,   /* c? */
@@ -14,16 +22,15 @@ enum REClosure {
 };
 
 enum REFlag {
-    RE_CONTROL = 1 << 0,
-    RE_EXCLUDE = 1 << 2
+    RE_EXCLUDE = 1 << 0
 };
 
 typedef struct RE RE;
 struct RE {
     char c;
-    int flags, closure;
+    int type, flags, closure;
     const char *set;        /* [0-9] */
-    RE *next;
+    RE *next, *group;
 };
 
 /*
