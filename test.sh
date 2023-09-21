@@ -57,6 +57,7 @@ test-charset() {
 test-group() {
     do-test '()'
     do-test '(a)'
+    do-test '^(a+)$'
     do-test '(a1)*'
     do-test '^ (\()'
     do-test '^(..)+$'

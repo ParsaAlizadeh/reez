@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "eprintf.h"
 
 static char *_text = NULL;
 static char *_beg = NULL;
@@ -87,7 +88,7 @@ static int _match_one(RE *re) {
     char textc;
     if ((textc = _pop()) == '\0')
         return 0;
-    if (RE_iscontrol(re) && re->c)
+    if (RE_iscontrol(re) && re->c == '.')
         return 1;
     if (re->type == RE_TCHAR)
         return re->c == textc;
