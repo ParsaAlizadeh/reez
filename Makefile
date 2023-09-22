@@ -1,5 +1,6 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -fsanitize=address -g3 -O2 -pg
+CFLAGS = -Wall -Wextra -O2
+CDEBUG = -fsanitize=address -g3 -pg
 PROGRAM = reez
 SOURCES = ${wildcard src/*.c src/**/*.c}
 OBJECTS = ${patsubst src/%.c,build/%.o,${SOURCES}}
@@ -7,6 +8,10 @@ DEPENDS = ${patsubst %.o,%.d,${OBJECTS}}
 
 all: ${PROGRAM}
 .PHONY: all
+
+debug: CFLAGS += ${CDEBUG}
+debug: ${PROGRAM}
+.PHONY: debug
 
 ${PROGRAM}: ${OBJECTS}
 	${CC} ${CFLAGS} ${OBJECTS} -o ${PROGRAM}

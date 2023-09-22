@@ -159,7 +159,7 @@ while (( $# > 0 )); do
             ;;
         '-t')
             : $(( verbose += 1 ))
-            do-test "$2"
+            make test && do-test "$2"
             exit $(( test_failed > 0 ? 1 : 0 ))
             ;;
         *)
