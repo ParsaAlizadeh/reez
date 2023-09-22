@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "eprintf.h"
+#include "nfa.h"
 
 static char *_text = NULL;
 static char *_beg = NULL;

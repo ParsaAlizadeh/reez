@@ -136,7 +136,7 @@ wprintf() {
 }
 
 usage() {
-    wprintf 'Usage: %s [-h] [-v] [-s] [-b BATCH]' "$0"
+    wprintf 'Usage: %s [-h] [-v] [-s] [-b BATCH] [-t TEST]' "$0"
     wprintf 'Batches: %s' "${tests[*]}"
     exit 1
 }
@@ -156,6 +156,11 @@ while (( $# > 0 )); do
         '-b')
             tests=($2)
             shift 2
+            ;;
+        '-t')
+            : $(( verbose += 1 ))
+            do-test "$2"
+            exit $(( test_failed > 0 ? 1 : 0 ))
             ;;
         *)
             usage

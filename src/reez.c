@@ -5,7 +5,7 @@
 #include <string.h>
 
 #include "eprintf.h"
-#include "matcher.h"
+#include "nfa.h"
 
 enum {
     OPT_INVERT = 1 << 0,
@@ -22,15 +22,15 @@ static int isquiet(int opts) {
     return (opts & OPT_QUIET) || (opts & OPT_COUNT);
 }
 
-static int search_file(FILE *file, const RE *re, const char *filename, int opts) {
+static int search_file(FILE *file, NFA *nfa, const char *filename, int opts) {
     int nmatch = 0;
     char *buf = NULL;
     size_t nbuf = 0;
     for (int lineno = 1; getline(&buf, &nbuf, file) >= 0; lineno++) {
         int n = strlen(buf);
         if (buf[n-1] == '\n')
-            buf[n-1] = '\0';
-        if (isinvert(opts) ^ ismatch(re, buf)) {
+            buf[--n] = '\0';
+        if (isinvert(opts) ^ (NFA_match(nfa, buf, n) != -1)) {
             nmatch++;
             if (!isquiet(opts)) {
                 if (filename != NULL)
@@ -75,6 +75,8 @@ int main(int argc, char *argv[]) {
     RE *re;
     if (RE_compile(argv[optind++], &re) == -1)
         eprintf("failed to compile the pattern");
+    NFA *nfa = NFA_new();
+    NFA_build(nfa, re);
     int nfile = argc - optind;
     int nmatch = 0;
     for (; optind < argc; optind++) {
@@ -83,9 +85,10 @@ int main(int argc, char *argv[]) {
             weprintf("can not open \"%s\":", argv[optind]);
             continue;
         }
-        nmatch += search_file(file, re, nfile > 1 ? argv[optind] : NULL, optmask);
+        nmatch += search_file(file, nfa, nfile > 1 ? argv[optind] : NULL, optmask);
         (void)fclose(file);
     }
+    NFA_free(nfa);
     RE_free(re);
     if (optmask & OPT_COUNT)
         printf("%d\n", nmatch);

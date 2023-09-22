@@ -1,0 +1,158 @@
+#include "nfa.h"
+
+#include <string.h>
+#include "eprintf.h"
+
+NFA *NFA_new(void) {
+    NFA *nfa = emalloc(sizeof(NFA));
+    nfa->node = vector_new(sizeof(Node));
+    nfa->edge = vector_new(sizeof(Edge));
+    nfa->mark = NULL;
+    nfa->start = nfa->finish = NFA_new_node(nfa)->id;
+    return nfa;
+}
+
+Node *NFA_new_node(NFA *nfa) {
+    Node u = {
+        .id = nfa->node->nelem,
+        .adj = vector_new(sizeof(int))
+    };
+    return vector_push(nfa->node, &u);
+}
+
+Node *NFA_get_node(NFA *nfa, int i) {
+    return (Node *)vector_at(nfa->node, i);
+}
+
+Edge *NFA_get_edge(NFA *nfa, int i) {
+    return (Edge *)vector_at(nfa->edge, i);
+}
+
+void NFA_free(NFA *nfa) {
+    if (nfa == NULL)
+        return;
+    for (size_t i = 0; i < nfa->node->nelem; i++) {
+        Node *u = (Node *)vector_at(nfa->node, i);
+        vector_free(u->adj);
+    }
+    vector_free(nfa->node);
+    vector_free(nfa->edge);
+    free(nfa->mark);
+    free(nfa);
+}
+
+Edge *NFA_new_edge(NFA *nfa, int i, int j) {
+    Edge e = {0};
+    e.id = nfa->edge->nelem;
+    e.from = i;
+    e.to = j;
+    vector_push(NFA_get_node(nfa, i)->adj, &e.id);
+    return vector_push(nfa->edge, &e);
+}
+
+Edge *NFA_new_eps_edge(NFA *nfa, int i, int j) {
+    Edge *e = NFA_new_edge(nfa, i, j);
+    e->flags |= EDGE_EPSILON;
+    return e;
+}
+
+int NFA_build(NFA *nfa, const RE *re) {
+    for (; re != NULL; re = re->next) {
+        int start = nfa->finish;
+        if (re->type == RE_TCONTROL || re->type == RE_TCHAR) {
+            Node *newf = NFA_new_node(nfa);
+            Edge *e = NFA_new_edge(nfa, nfa->finish, newf->id);
+            e->c = re->c;
+            if (re->type == RE_TCONTROL)
+                e->flags |= EDGE_CONTROL;
+            nfa->finish = newf->id;
+        } else if (re->type == RE_TSET) {
+            Node *newf = NFA_new_node(nfa);
+            Edge *e = NFA_new_edge(nfa, nfa->finish, newf->id);
+            e->set = re->set;
+            e->flags |= EDGE_SET;
+            if (re->flags & RE_EXCLUDE)
+                e->flags |= EDGE_EXCLUDE;
+            nfa->finish = newf->id;
+        } else if (re->type == RE_TGROUP)
+            NFA_build(nfa, re->group);
+        /* closure */
+        if (start == nfa->finish || re->closure == RE_ONCE)
+            ;
+        else if (re->closure == RE_MAYBE)
+            NFA_new_eps_edge(nfa, start, nfa->finish);
+        else {
+            Node *newf = NFA_new_node(nfa);
+            NFA_new_eps_edge(nfa, nfa->finish, newf->id);
+            NFA_new_eps_edge(nfa, nfa->finish, start);
+            if (re->closure == RE_STAR)
+                NFA_new_eps_edge(nfa, start, nfa->finish);
+            nfa->finish = newf->id;
+        }
+    }
+    return nfa->finish;
+}
+
+void NFA_traverse(NFA *nfa, const char *text, int ntext) {
+    int nnode = nfa->node->nelem;
+    int nmark = (ntext + 1) * nnode;
+    nfa->mark = erealloc(nfa->mark, nmark * sizeof(int));
+    memset(nfa->mark, 0, nmark * sizeof(int));
+    NFA_dfs(nfa, nfa->start, text, text);
+}
+
+int *NFA_get_mark(NFA *nfa, int u, size_t i) {
+    int nnode = nfa->node->nelem;
+    return &nfa->mark[i * nnode + u];
+}
+
+void NFA_dfs(NFA *nfa, int uid, const char *text, const char *beg) {
+    int *mark = NFA_get_mark(nfa, uid, text - beg);
+    if (*mark)
+        return;
+    *mark = 1;
+    Node *u = NFA_get_node(nfa, uid);
+    for (size_t i = 0; i < u->adj->nelem; i++) {
+        int eid = *(int *)vector_at(u->adj, i);
+        Edge *e = NFA_get_edge(nfa, eid);
+        const char *now = text;
+        if (Edge_accept(e, &now, beg))
+            NFA_dfs(nfa, e->to, now, beg);
+    }
+    if (uid == nfa->start && *text != '\0')
+        NFA_dfs(nfa, uid, text+1, beg);
+}
+
+int Edge_accept(Edge *e, const char **textp, const char *beg) {
+    if (e->flags & EDGE_EPSILON)
+        return 1;
+    if (e->flags & EDGE_CONTROL) {
+        if (e->c == '^')
+            return *textp == beg;
+        else if (e->c == '$')
+            return **textp == '\0';
+        else if (e->c == '.')
+            return *((*textp)++) != '\0';
+        else
+            return 0; /* undefined control */
+    }
+    if (e->flags & EDGE_SET) {
+        char textc = *((*textp)++);
+        if (textc == '\0')
+            return 0;
+        for (const char *set = e->set; *set != '\0' && *set != ']'; set++)
+            if (*set == textc)
+                return (e->flags & EDGE_EXCLUDE) == 0;
+        return (e->flags & EDGE_EXCLUDE) != 0;
+    }
+    return *((*textp)++) == e->c;
+}
+
+int NFA_match(NFA *nfa, const char *text, int ntext) {
+    NFA_traverse(nfa, text, ntext);
+    for (int i = ntext; i >= 0; i--)
+        if (*NFA_get_mark(nfa, nfa->finish, i))
+            return i;
+    return -1;
+}
+

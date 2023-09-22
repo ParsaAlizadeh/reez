@@ -50,7 +50,7 @@ void *emalloc(size_t size) {
 
 void *erealloc(void *p, size_t size) {
     void *newp = realloc(p, size);
-    if (p == NULL)
+    if (newp == NULL)
         eprintf("erealloc(%p, %lu) failed:", p, size);
     return newp;
 }
