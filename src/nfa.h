@@ -34,20 +34,15 @@ struct NFA {
     int start, finish;
 };
 
-enum {
-    NFA_NOEXHAUST = 1
-};
-
 NFA *NFA_new(void);
 void NFA_free(NFA *);
 Node *NFA_new_node(NFA *);
-Node *NFA_get_node(NFA *, int);
-Edge *NFA_new_edge(NFA *, int i, int j);
-Edge *NFA_new_eps_edge(NFA *, int i, int j);
-Edge *NFA_get_edge(NFA *, int);
+Node *NFA_get_node(NFA *, int nodei);
+Edge *NFA_new_edge(NFA *, int nodei, int nodej);
+Edge *NFA_new_eps_edge(NFA *, int nodei, int nodej);
+Edge *NFA_get_edge(NFA *, int edgei);
 int NFA_build(NFA *, const RE *);
 void NFA_traverse(NFA *, const char *text, int ntext);
-int NFA_dfs(NFA *, int uid, const char *text, const char *beg);
 int NFA_match(NFA *, const char *text, int ntext);
 
 #endif

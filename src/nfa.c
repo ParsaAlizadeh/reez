@@ -101,14 +101,6 @@ int NFA_build(NFA *nfa, const RE *re) {
     return nfa->finish;
 }
 
-void NFA_traverse(NFA *nfa, const char *text, int ntext) {
-    int nnode = nfa->node->nelem;
-    int nmark = (ntext + 1) * nnode;
-    nfa->mark = erealloc(nfa->mark, nmark * sizeof(int));
-    memset(nfa->mark, 0, nmark * sizeof(int));
-    NFA_dfs(nfa, nfa->start, text, text);
-}
-
 static inline int *_NFA_get_mark(NFA *nfa, int u, size_t i) {
     int nnode = nfa->node->nelem;
     return &nfa->mark[i * nnode + u];
@@ -125,7 +117,7 @@ static inline int _Edge_accept(Edge *e, const char **textp, const char *beg) {
         else if (e->c == '.')
             return *((*textp)++) != '\0';
         else
-            return 0; /* undefined control */
+            eprintf("Edge_accept: undefined control %c", e->c);
     }
     if (e->flags & EDGE_SET) {
         char textc = *((*textp)++);
@@ -139,24 +131,32 @@ static inline int _Edge_accept(Edge *e, const char **textp, const char *beg) {
     return *((*textp)++) == e->c;
 }
 
-int NFA_dfs(NFA *nfa, int uid, const char *text, const char *beg) {
+static int _NFA_dfs(NFA *nfa, int uid, const char *text, const char *beg) {
     int *mark = _NFA_get_mark(nfa, uid, text - beg);
     if (*mark)
         return 0;
     *mark = 1;
-    if (NFA_NOEXHAUST && uid == nfa->finish)
+    if (uid == nfa->finish)
         return 1;
     Node *u = NFA_get_node(nfa, uid);
     for (size_t i = 0; i < u->adj->nelem; i++) {
         int eid = *(int *)vector_at(u->adj, i);
         Edge *e = NFA_get_edge(nfa, eid);
         const char *now = text;
-        if (_Edge_accept(e, &now, beg) && NFA_dfs(nfa, e->to, now, beg))
-            return NFA_NOEXHAUST;
+        if (_Edge_accept(e, &now, beg) && _NFA_dfs(nfa, e->to, now, beg))
+            return 1;
     }
-    if (uid == nfa->start && *text != '\0' && NFA_dfs(nfa, uid, text+1, beg))
-        return NFA_NOEXHAUST;
+    if (uid == nfa->start && *text != '\0')
+        return _NFA_dfs(nfa, uid, text+1, beg);
     return 0;
+}
+
+void NFA_traverse(NFA *nfa, const char *text, int ntext) {
+    int nnode = nfa->node->nelem;
+    int nmark = (ntext + 1) * nnode;
+    nfa->mark = erealloc(nfa->mark, nmark * sizeof(int));
+    memset(nfa->mark, 0, nmark * sizeof(int));
+    _NFA_dfs(nfa, nfa->start, text, text);
 }
 
 int NFA_match(NFA *nfa, const char *text, int ntext) {

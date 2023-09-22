@@ -74,23 +74,29 @@ test-branch() {
     do-test '^.?(aa|00)+$'
     do-test '(\d|[^a])$'
     do-test '^(a+|)0'
-    do-test '^(|a*|a*a*|a*a*a*)$'
-    do-test '^(a*a*a*|a*a*|a*|)$'
+    do-test '(|a*|a*a*|a*a*a*)$'
+    do-test '(a*a*a*|a*a*|a*|)$'
 }
 
 test_failed=0
 batch_failed=0
 max_ms=0
+batch_max_ms=0
+
+max() {
+    echo "$(( $1 > $2 ? $1 : $2 ))"
+}
 
 do-test() {
     local cur_ms fmt logitem
-    fmt="do-test %2s %-20s %-25s %4d ms"
+    fmt="do-test %2s %-25s %-25s %5d ms"
     for testfile in test/*.in; do
         for testopt in "${opts[@]}"; do
             grep --text --perl-regexp $testopt "$@" "$testfile" 2>/dev/null >test/grep.out
             /bin/time --quiet --format 'time: %U' -- ./reez $testopt "$@" "$testfile" >test/reez.out 2>test/reez.err
             cur_ms="$(awk '/^time/ { print 1000 * $2 }' test/reez.err)"
-            max_ms="$(( cur_ms > max_ms ? cur_ms : max_ms ))"
+            max_ms="$(max cur_ms max_ms)"
+            batch_max_ms="$(max cur_ms batch_max_ms)"
             logitem=("$testopt" "'$*'" "$testfile" "$cur_ms")
             if ! cmp -s test/reez.out test/grep.out; then
                 weprintf "$fmt    files differ" "${logitem[@]}"
@@ -115,12 +121,13 @@ test-all() {
     # cp test/comb test/binary.in # null chars inside lines
     for batch in "${tests[@]}"; do
         test_failed=0
+        batch_max_ms=0
         "$batch"
         if (( test_failed > 0 )); then
-            weprintf '%s failed on %d test(s)\n' "$batch" "$test_failed"
+            weprintf '%s failed on %d test(s)\n' "$batch" "$test_failed" "$batch_max_ms"
             : $(( batch_failed += 1 ))
         else
-            wprintf '%s passed' "$batch"
+            wprintf '%-30s %5d ms' "$batch passed" "$batch_max_ms"
             (( verbose > 0 )) && wprintf ''
         fi
     done
