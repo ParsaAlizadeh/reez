@@ -8,6 +8,7 @@ tests=(
     test-closure
     test-charset
     test-group
+    test-branch
 )
 opts=('' -c -v -n)
 
@@ -64,6 +65,17 @@ test-group() {
     do-test '((a0)+)?0'
     do-test '^((((\D))))$'
     do-test '^[^a]([^a][^a])+a'
+}
+
+test-branch() {
+    do-test '|'
+    do-test '^a|0$'
+    do-test '^(a|0)$'
+    do-test '^.?(aa|00)+$'
+    do-test '(\d|[^a])$'
+    do-test '^(a+|)0'
+    do-test '^(|a*|a*a*|a*a*a*)$'
+    do-test '^(a*a*a*|a*a*|a*|)$'
 }
 
 test_failed=0

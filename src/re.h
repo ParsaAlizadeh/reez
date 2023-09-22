@@ -30,7 +30,7 @@ struct RE {
     char c;
     int type, flags, closure;
     const char *set;        /* [0-9] */
-    RE *next, *group;
+    RE *next, *group, *branch;
 };
 
 /*

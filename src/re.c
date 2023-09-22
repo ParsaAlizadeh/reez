@@ -99,11 +99,18 @@ static int _compile_group(RE **ret) {
             if (_compile_set(&re) == -1)
                 goto fail;
         } else if (_peek() == '(') {
-            re.type = RE_TGROUP;
             _pop(); /* '(' */
+            re.type = RE_TGROUP;
             if (_compile_group(&re.group) == -1 || _peek() != ')')
                 goto fail;
             _pop(); /* ')' */
+        } else if (_peek() == '|') {
+            _pop(); /* '|' */
+            re.type = RE_TBRANCH;
+            re.next = rep;
+            rep = _RE_edup(&re);
+            repp = &rep->branch;
+            continue;
         } else {
             re.c = _pop();
             if (strchr(RE_CONTROLS, re.c) != NULL)

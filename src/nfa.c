@@ -76,6 +76,14 @@ int NFA_build(NFA *nfa, const RE *re) {
             nfa->finish = newf->id;
         } else if (re->type == RE_TGROUP)
             NFA_build(nfa, re->group);
+        else if (re->type == RE_TBRANCH) {
+            int f1 = NFA_build(nfa, re->next);
+            nfa->finish = start;
+            int f2 = NFA_build(nfa, re->branch);
+            NFA_new_eps_edge(nfa, f2, f1);
+            nfa->finish = f1;
+            break;
+        }
         /* closure */
         if (start == nfa->finish || re->closure == RE_ONCE)
             ;
