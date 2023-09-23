@@ -30,11 +30,8 @@ test: ${PROGRAM} test/comb
 .PHONY: test
 
 test/comb: test/comb.c
-	${CC} -O2 $< -o $@
-
-test/sample.txt: test/make-sample Makefile
-	./test/make-sample 5 "ab12.?*+^$$\[] " > $@
+	${CC} ${CFLAGS} $< -o $@
 
 clean-test:
-	rm -rf test/make-sample test/*.txt
+	rm -rf test/comb test/*.in test/*.out test/*.err
 .PHONY: clean-test
