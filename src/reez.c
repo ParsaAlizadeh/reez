@@ -46,7 +46,7 @@ static int search_file(FILE *file, NFA *nfa, const char *filename, int opts) {
 }
 
 static void eprint_usage(char *prog) {
-    eprintf("Usage: %s [-qvcn] <pattern> <filename> [<filename>...]", prog);
+    eprintf("Usage: %s [-qvcn] <pattern> [<filename>...]", prog);
 }
 
 int main(int argc, char *argv[]) {
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
             eprint_usage(argv[0]);
         }
     }
-    if (argc < optind + 2)
+    if (optind >= argc) // no pattern
         eprint_usage(argv[0]);
     RE *re;
     if (RE_compile(argv[optind++], &re) == -1)
@@ -79,14 +79,18 @@ int main(int argc, char *argv[]) {
     NFA_build(nfa, re);
     int nfile = argc - optind;
     int nmatch = 0;
-    for (; optind < argc; optind++) {
-        FILE *file = fopen(argv[optind], "r");
-        if (file == NULL) {
-            weprintf("can not open \"%s\":", argv[optind]);
-            continue;
+    if (optind < argc) {
+        for (; optind < argc; optind++) {
+            FILE *file = fopen(argv[optind], "r");
+            if (file == NULL) {
+                weprintf("can not open \"%s\":", argv[optind]);
+                continue;
+            }
+            nmatch += search_file(file, nfa, nfile > 1 ? argv[optind] : NULL, optmask);
+            (void)fclose(file);
         }
-        nmatch += search_file(file, nfa, nfile > 1 ? argv[optind] : NULL, optmask);
-        (void)fclose(file);
+    } else {
+        nmatch += search_file(stdin, nfa, NULL, optmask);
     }
     NFA_free(nfa);
     RE_free(re);
