@@ -45,8 +45,8 @@ static int search_file(FILE *file, NFA *nfa, const char *filename, int opts) {
     return nmatch;
 }
 
-static void eprint_usage(char *prog) {
-    eprintf("Usage: %s [-qvcn] <pattern> [<filename>...]", prog);
+static void eprint_usage(void) {
+    eprintf("Usage: %s [-qvcn] <pattern> [<filename>...]", getprogname());
 }
 
 int main(int argc, char *argv[]) {
@@ -67,11 +67,11 @@ int main(int argc, char *argv[]) {
             optmask |= OPT_LINENO;
             break;
         default:
-            eprint_usage(argv[0]);
+            eprint_usage();
         }
     }
     if (optind >= argc) // no pattern
-        eprint_usage(argv[0]);
+        eprint_usage();
     RE *re;
     if (RE_compile(argv[optind++], &re) == -1)
         eprintf("failed to compile the pattern");
