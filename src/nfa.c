@@ -166,4 +166,3 @@ int NFA_match(NFA *nfa, const char *text, int ntext) {
             return i;
     return -1;
 }
-
