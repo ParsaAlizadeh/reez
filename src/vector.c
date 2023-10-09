@@ -3,13 +3,13 @@
 #include <string.h>
 #include "eprintf.h"
 
-static void vector_incrcap(vector *vec, size_t newcap) {
+static void _vector_recap(vector *vec, size_t newcap) {
     void *newmem = erealloc(vec->mem, newcap * vec->nbyte);
     vec->mem = newmem;
     vec->cap = newcap;
 }
 
-static void _vector_init(vector *vec, size_t nbyte) {
+void vector_init(vector *vec, size_t nbyte) {
     vec->mem = NULL;
     vec->nelem = 0;
     vec->nbyte = nbyte;
@@ -18,7 +18,7 @@ static void _vector_init(vector *vec, size_t nbyte) {
 
 vector *vector_new(size_t nbyte) {
     vector *vec = emalloc(sizeof(vector));
-    _vector_init(vec, nbyte);
+    vector_init(vec, nbyte);
     return vec;
 }
 
@@ -37,18 +37,11 @@ void *vector_push(vector *vec, const void *src) {
         size_t newcap = 2 * vec->nelem;
         if (vec->nelem == 0)
             newcap = 1;
-        vector_incrcap(vec, newcap);
+        _vector_recap(vec, newcap);
     }
     void *dest = _vector_unsafeat(vec, vec->nelem++);
     memcpy(dest, src, vec->nbyte);
     return dest;
-}
-
-void vector_free(vector *vec) {
-    if (vec == NULL)
-        return;
-    free(vec->mem);
-    free(vec);
 }
 
 int vector_pop(vector *vec, void *dest) {
@@ -58,4 +51,16 @@ int vector_pop(vector *vec, void *dest) {
         memcpy(dest, _vector_unsafeat(vec, vec->nelem-1), vec->nbyte);
     vec->nelem--;
     return 0;
+}
+
+void vector_clear(vector *vec) {
+    free(vec->mem);
+    vector_init(vec, vec->nbyte);
+}
+
+void vector_free(vector *vec) {
+    if (vec == NULL)
+        return;
+    free(vec->mem);
+    free(vec);
 }

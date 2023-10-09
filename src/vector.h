@@ -3,6 +3,9 @@
 
 #include <stdlib.h>
 
+/*
+ * dynamic array of vec->nelem elements, each vec->nbyte bytes
+ */
 typedef struct vector {
     void *mem;      /* void mem[.nbyte * .cap] */
     size_t nbyte;
@@ -11,7 +14,12 @@ typedef struct vector {
 } vector;
 
 /*
- * dynamic array of vec->nelem elements, each vec->nbyte bytes
+ * initializes an empty vector.
+ */
+void vector_init(vector *vec, size_t nbyte);
+
+/*
+ * allocate a new vector in heap and initialize it.
  */
 vector *vector_new(size_t nbyte);
 
@@ -21,8 +29,9 @@ vector *vector_new(size_t nbyte);
 void *vector_at(vector *vec, size_t index);
 
 /*
- * copies nbyte from src to the new element at the end of vector. returns
- * pointer to that location (e.g. vector_at(vec, vec->nelem++)).
+ * copies nbyte from src to the new element at the end of
+ * vector. returns pointer to that location (e.g. vector_at(vec,
+ * vec->nelem++)).
  */
 void *vector_push(vector *vec, const void *src);
 
@@ -33,7 +42,13 @@ void *vector_push(vector *vec, const void *src);
 int vector_pop(vector *vec, void *dest);
 
 /*
- * accepts null.
+ * clears all the memory allocated internally by vector. then
+ * reinitializes the vector.
+ */
+void vector_clear(vector *vec);
+
+/*
+ * clears the vector and free it.
  */
 void vector_free(vector *vec);
 

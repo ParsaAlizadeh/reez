@@ -11,7 +11,7 @@ typedef struct NFA NFA;
 
 struct Node {
     int id;
-    vector *adj; /* int adj[] */
+    vector adj; /* int adj[] */
 };
 
 enum EdgeFlags {
@@ -28,8 +28,8 @@ struct Edge {
 };
 
 struct NFA {
-    vector *node;
-    vector *edge;
+    vector node;
+    vector edge;
     int *mark;
     int start, finish;
 };
