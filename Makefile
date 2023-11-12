@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -O2
-CDEBUG = -fsanitize=address -g3 -pg
+CDEBUG = -fsanitize=address -g3 -pg -Og
 PROGRAM = reez
 SOURCES = ${wildcard src/*.c src/**/*.c}
 OBJECTS = ${patsubst src/%.c,build/%.o,${SOURCES}}
