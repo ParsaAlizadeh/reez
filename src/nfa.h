@@ -2,7 +2,6 @@
 #define NFA_H
 
 #include <stdlib.h>
-#include "vector.h"
 #include "re.h"
 
 typedef struct Node Node;
@@ -11,7 +10,7 @@ typedef struct NFA NFA;
 
 struct Node {
     int id;
-    vector adj; /* int adj[] */
+    int *adj;
 };
 
 enum EdgeFlags {
@@ -28,8 +27,8 @@ struct Edge {
 };
 
 struct NFA {
-    vector node;
-    vector edge;
+    Node *node;
+    Edge *edge;
     int *mark;
     int start, finish;
 };
