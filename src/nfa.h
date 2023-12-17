@@ -33,15 +33,15 @@ struct NFA {
     int start, finish;
 };
 
-NFA *NFA_new(void);
-void NFA_free(NFA *);
-Node *NFA_new_node(NFA *);
-Node *NFA_get_node(NFA *, int nodei);
-Edge *NFA_new_edge(NFA *, int nodei, int nodej);
-Edge *NFA_new_eps_edge(NFA *, int nodei, int nodej);
-Edge *NFA_get_edge(NFA *, int edgei);
-int NFA_build(NFA *, const RE *);
-void NFA_traverse(NFA *, const char *text, int ntext);
-int NFA_match(NFA *, const char *text, int ntext);
+extern NFA *NFA_new(void);
+extern void NFA_free(NFA *);
+extern Node *NFA_new_node(NFA *);
+extern Node *NFA_get_node(NFA *, int nodei);
+extern Edge *NFA_new_edge(NFA *, int nodei, int nodej);
+extern Edge *NFA_new_eps_edge(NFA *, int nodei, int nodej);
+extern Edge *NFA_get_edge(NFA *, int edgei);
+extern int NFA_build(NFA *, const RE *);
+extern void NFA_traverse(NFA *, const char *text, int ntext);
+extern int NFA_match(NFA *, const char *text, int ntext);
 
 #endif

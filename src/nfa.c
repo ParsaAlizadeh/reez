@@ -59,30 +59,38 @@ Edge *NFA_new_eps_edge(NFA *nfa, int i, int j) {
 int NFA_build(NFA *nfa, const RE *re) {
     for (; re != NULL; re = re->next) {
         int start = nfa->finish;
-        if (re->type == RE_TCONTROL || re->type == RE_TCHAR) {
-            Node *newf = NFA_new_node(nfa);
-            Edge *e = NFA_new_edge(nfa, nfa->finish, newf->id);
+        Node *newf;
+        Edge *e;
+        int f1, f2;
+        switch (re->type) {
+        case RE_TCONTROL:
+        case RE_TCHAR:
+            newf = NFA_new_node(nfa);
+            e = NFA_new_edge(nfa, nfa->finish, newf->id);
             e->c = re->c;
             if (re->type == RE_TCONTROL)
                 e->flags |= EDGE_CONTROL;
             nfa->finish = newf->id;
-        } else if (re->type == RE_TSET) {
-            Node *newf = NFA_new_node(nfa);
-            Edge *e = NFA_new_edge(nfa, nfa->finish, newf->id);
+            break;
+        case RE_TSET:
+            newf = NFA_new_node(nfa);
+            e = NFA_new_edge(nfa, nfa->finish, newf->id);
             e->set = re->set;
             e->flags |= EDGE_SET;
             if (re->flags & RE_EXCLUDE)
                 e->flags |= EDGE_EXCLUDE;
             nfa->finish = newf->id;
-        } else if (re->type == RE_TGROUP)
+            break;
+        case RE_TGROUP:
             NFA_build(nfa, re->group);
-        else if (re->type == RE_TBRANCH) {
-            int f1 = NFA_build(nfa, re->next);
+            break;
+        case RE_TBRANCH:
+            f1 = NFA_build(nfa, re->next);
             nfa->finish = start;
-            int f2 = NFA_build(nfa, re->branch);
+            f2 = NFA_build(nfa, re->branch);
             NFA_new_eps_edge(nfa, f2, f1);
             nfa->finish = f1;
-            break;
+            goto done;
         }
         /* closure */
         if (start == nfa->finish || re->closure == RE_ONCE)
@@ -90,7 +98,7 @@ int NFA_build(NFA *nfa, const RE *re) {
         else if (re->closure == RE_MAYBE)
             NFA_new_eps_edge(nfa, start, nfa->finish);
         else {
-            Node *newf = NFA_new_node(nfa);
+            newf = NFA_new_node(nfa);
             NFA_new_eps_edge(nfa, nfa->finish, newf->id);
             NFA_new_eps_edge(nfa, nfa->finish, start);
             if (re->closure == RE_STAR)
@@ -98,6 +106,7 @@ int NFA_build(NFA *nfa, const RE *re) {
             nfa->finish = newf->id;
         }
     }
+ done:
     return nfa->finish;
 }
 

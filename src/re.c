@@ -59,13 +59,17 @@ static int _compile_escape(RE *re) {
 
 static int _compile_closure(RE *re) {
     char clo = _pop();
-    if (clo == '?')
+    switch (clo) {
+    case '?':
         re->closure = RE_MAYBE;
-    else if (clo == '*')
+        break;
+    case '*':
         re->closure = RE_STAR;
-    else if (clo == '+')
+        break;
+    case '+':
         re->closure = RE_PLUS;
-    else {
+        break;
+    default:
         _unpop(clo);
         return -1;
     }
@@ -92,26 +96,31 @@ static int _compile_group(RE **ret) {
     RE **repp = &rep;
     while (_peek() != '\0' && _peek() != ')') {
         RE re = _RE_DEFAULT;
-        if (_peek() == '\\') {
+        switch (_peek()) {
+        case '\\':
             if (_compile_escape(&re) == -1)
                 goto fail;
-        } else if (_peek() == '[') {
+            break;
+        case '[':
             if (_compile_set(&re) == -1)
                 goto fail;
-        } else if (_peek() == '(') {
+            break;
+        case '(':
             _pop(); /* '(' */
             re.type = RE_TGROUP;
             if (_compile_group(&re.group) == -1 || _peek() != ')')
                 goto fail;
             _pop(); /* ')' */
-        } else if (_peek() == '|') {
+            break;
+        case '|':
             _pop(); /* '|' */
             re.type = RE_TBRANCH;
             re.next = rep;
             rep = _RE_edup(&re);
             repp = &rep->branch;
             continue;
-        } else {
+            break;
+        default:
             re.c = _pop();
             if (strchr(RE_CONTROLS, re.c) != NULL)
                 re.type = RE_TCONTROL;
