@@ -7,11 +7,6 @@
 #include "eprintf.h"
 #include "nfa.h"
 
-#define STB_DS_IMPLEMENTATION
-#define STBDS_REALLOC(ctx,ptr,size) erealloc(ptr,size)
-#define STBDS_FREE(ctx,ptr) free(ptr)
-#include "stb_ds.h"
-
 enum {
     OPT_INVERT = 1 << 0,
     OPT_COUNT = 1 << 1,

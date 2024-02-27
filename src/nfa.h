@@ -8,9 +8,14 @@ typedef struct Node Node;
 typedef struct Edge Edge;
 typedef struct NFA NFA;
 
+#define array(type) struct {                    \
+        int count, capacity;                    \
+        type *items;                            \
+    }
+
 struct Node {
     int id;
-    int *adj;
+    array(int) adj;
 };
 
 enum EdgeFlags {
@@ -27,10 +32,10 @@ struct Edge {
 };
 
 struct NFA {
-    Node *node;
-    Edge *edge;
-    int *mark;
     int start, finish;
+    int *mark;
+    array(Node) node;
+    array(Edge) edge;
 };
 
 extern NFA *NFA_new(void);

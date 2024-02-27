@@ -2,12 +2,37 @@
 
 #include <string.h>
 #include "eprintf.h"
-#include "stb_ds.h"
+
+#define arrput(arr, x)                                                  \
+    do {                                                                \
+        if ((arr).count == (arr).capacity) {                            \
+            if ((arr).capacity == 0)                                    \
+                (arr).capacity = 8;                                     \
+            else                                                        \
+                (arr).capacity *= 2;                                    \
+            (arr).items = erealloc((arr).items, sizeof((arr).items[0]) * (arr).capacity); \
+        }                                                               \
+        (arr).items[(arr).count++] = (x);                               \
+    } while (0);
+
+#define arrlast(arr) ((arr).items[(arr).count-1])
+
+#define arrzero(arr)                            \
+    do {                                        \
+        (arr).count = (arr).capacity = 0;       \
+        (arr).items = NULL;                     \
+    } while (0)
+
+#define arrfree(arr)                            \
+    do {                                        \
+        free((arr).items);                      \
+        arrzero((arr));                         \
+    } while (0);
 
 NFA *NFA_new(void) {
     NFA *nfa = emalloc(sizeof(NFA));
-    nfa->node = NULL;
-    nfa->edge = NULL;
+    arrzero(nfa->node);
+    arrzero(nfa->edge);
     nfa->mark = NULL;
     nfa->start = nfa->finish = NFA_new_node(nfa)->id;
     return nfa;
@@ -15,24 +40,24 @@ NFA *NFA_new(void) {
 
 Node *NFA_new_node(NFA *nfa) {
     Node u = {0};
-    u.id = arrlen(nfa->node);
+    u.id = nfa->node.count;
     arrput(nfa->node, u);
     return &arrlast(nfa->node);
 }
 
 Node *NFA_get_node(NFA *nfa, int i) {
-    return &nfa->node[i];
+    return &nfa->node.items[i];
 }
 
 Edge *NFA_get_edge(NFA *nfa, int i) {
-    return &nfa->edge[i];
+    return &nfa->edge.items[i];
 }
 
 void NFA_free(NFA *nfa) {
     if (nfa == NULL)
         return;
-    for (size_t i = 0; i < arrlenu(nfa->node); i++) {
-        arrfree(nfa->node[i].adj);
+    for (int i = 0; i < nfa->node.count; i++) {
+        arrfree(nfa->node.items[i].adj);
     }
     arrfree(nfa->node);
     arrfree(nfa->edge);
@@ -42,10 +67,10 @@ void NFA_free(NFA *nfa) {
 
 Edge *NFA_new_edge(NFA *nfa, int i, int j) {
     Edge e = {0};
-    e.id = arrlen(nfa->edge);
+    e.id = nfa->edge.count;
     e.from = i;
     e.to = j;
-    arrput(nfa->node[i].adj, e.id);
+    arrput(nfa->node.items[i].adj, e.id);
     arrput(nfa->edge, e);
     return &arrlast(nfa->edge);
 }
@@ -111,7 +136,7 @@ int NFA_build(NFA *nfa, const RE *re) {
 }
 
 static inline int *_NFA_get_mark(NFA *nfa, int u, size_t i) {
-    int nnode = arrlen(nfa->node);
+    int nnode = nfa->node.count;
     return &nfa->mark[i * nnode + u];
 }
 
@@ -148,8 +173,8 @@ static int _NFA_dfs(NFA *nfa, int uid, const char *text, const char *beg) {
     if (uid == nfa->finish)
         return 1;
     Node *u = NFA_get_node(nfa, uid);
-    for (size_t i = 0; i < arrlenu(u->adj); i++) {
-        int eid = u->adj[i];
+    for (int i = 0; i < u->adj.count; i++) {
+        int eid = u->adj.items[i];
         Edge *e = NFA_get_edge(nfa, eid);
         const char *now = text;
         if (_Edge_accept(e, &now, beg) && _NFA_dfs(nfa, e->to, now, beg))
@@ -161,7 +186,7 @@ static int _NFA_dfs(NFA *nfa, int uid, const char *text, const char *beg) {
 }
 
 void NFA_traverse(NFA *nfa, const char *text, int ntext) {
-    int nnode = arrlen(nfa->node);
+    int nnode = nfa->node.count;
     int nmark = (ntext + 1) * nnode;
     nfa->mark = erealloc(nfa->mark, nmark * sizeof(int));
     memset(nfa->mark, 0, nmark * sizeof(int));
