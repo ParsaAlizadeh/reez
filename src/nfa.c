@@ -13,7 +13,7 @@
             (arr).items = erealloc((arr).items, sizeof((arr).items[0]) * (arr).capacity); \
         }                                                               \
         (arr).items[(arr).count++] = (x);                               \
-    } while (0);
+    } while (0)
 
 #define arrlast(arr) ((arr).items[(arr).count-1])
 
@@ -27,7 +27,7 @@
     do {                                        \
         free((arr).items);                      \
         arrzero((arr));                         \
-    } while (0);
+    } while (0)
 
 NFA *NFA_new(void) {
     NFA *nfa = emalloc(sizeof(NFA));
