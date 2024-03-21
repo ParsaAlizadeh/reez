@@ -2,9 +2,8 @@ CC = gcc
 CFLAGS = -Wall -Wextra -O2
 CDEBUG = -fsanitize=address -g3 -pg -Og
 PROGRAM = reez
-SOURCES = ${wildcard src/*.c src/**/*.c}
-OBJECTS = ${patsubst src/%.c,build/%.o,${SOURCES}}
-DEPENDS = ${patsubst %.o,%.d,${OBJECTS}}
+HEADERS = src/eprintf.h src/re.h src/nfa.h
+SOURCES = src/eprintf.c src/re.c src/nfa.c src/reez.c
 
 all: ${PROGRAM}
 .PHONY: all
@@ -13,17 +12,11 @@ debug: CFLAGS += ${CDEBUG}
 debug: ${PROGRAM}
 .PHONY: debug
 
-${PROGRAM}: ${OBJECTS}
-	${CC} ${CFLAGS} ${OBJECTS} -o ${PROGRAM}
-
-build/%.o: src/%.c
-	@mkdir -p ${dir $@}
-	${CC} ${CFLAGS} -c -MMD $< -o $@
-
--include ${DEPENDS}
+${PROGRAM}: ${HEADERS} ${SOURCES}
+	${CC} ${CFLAGS} ${SOURCES} -o ${PROGRAM}
 
 clean:
-	rm -rf build/ ${PROGRAM}
+	rm -rf ${PROGRAM}
 .PHONY: clean
 
 test: ${PROGRAM} test/comb
