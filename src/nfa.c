@@ -29,13 +29,11 @@
         arrzero((arr));                         \
     } while (0)
 
-NFA *NFA_new(void) {
-    NFA *nfa = emalloc(sizeof(NFA));
+void NFA_init(NFA *nfa) {
     arrzero(nfa->node);
     arrzero(nfa->edge);
     nfa->mark = NULL;
     nfa->start = nfa->finish = NFA_new_node(nfa)->id;
-    return nfa;
 }
 
 Node *NFA_new_node(NFA *nfa) {
@@ -53,16 +51,13 @@ Edge *NFA_get_edge(NFA *nfa, int i) {
     return &nfa->edge.items[i];
 }
 
-void NFA_free(NFA *nfa) {
-    if (nfa == NULL)
-        return;
+void NFA_clear(NFA *nfa) {
     for (int i = 0; i < nfa->node.count; i++) {
         arrfree(nfa->node.items[i].adj);
     }
     arrfree(nfa->node);
     arrfree(nfa->edge);
     free(nfa->mark);
-    free(nfa);
 }
 
 Edge *NFA_new_edge(NFA *nfa, int i, int j) {

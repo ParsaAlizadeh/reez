@@ -38,8 +38,8 @@ struct NFA {
     array(Edge) edge;
 };
 
-extern NFA *NFA_new(void);
-extern void NFA_free(NFA *);
+extern void NFA_init(NFA *);
+extern void NFA_clear(NFA *);
 extern Node *NFA_new_node(NFA *);
 extern Node *NFA_get_node(NFA *, int nodei);
 extern Edge *NFA_new_edge(NFA *, int nodei, int nodej);

@@ -20,7 +20,7 @@ static RE *_RE_edup(const RE *s) {
     return re;
 }
 
-static char *_regex = NULL;
+static const char *_regex = NULL;
 
 static char _peek(void) {
     return *_regex;
@@ -140,7 +140,7 @@ static int _compile_group(RE **ret) {
 }
 
 int RE_compile(const char *regex, RE **ret) {
-    _regex = (char *)regex;
+    _regex = regex;
     return _compile_group(ret);
 }
 

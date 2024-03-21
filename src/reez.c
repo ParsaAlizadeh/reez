@@ -75,8 +75,9 @@ int main(int argc, char *argv[]) {
     RE *re;
     if (RE_compile(argv[optind++], &re) == -1)
         eprintf("failed to compile the pattern");
-    NFA *nfa = NFA_new();
-    NFA_build(nfa, re);
+    NFA nfa;
+    NFA_init(&nfa);
+    NFA_build(&nfa, re);
     int nfile = argc - optind;
     int nmatch = 0;
     if (optind < argc) {
@@ -86,13 +87,14 @@ int main(int argc, char *argv[]) {
                 weprintf("can not open \"%s\":", argv[optind]);
                 continue;
             }
-            nmatch += search_file(file, nfa, nfile > 1 ? argv[optind] : NULL, optmask);
+            nmatch += search_file(file, &nfa,
+                                  nfile > 1 ? argv[optind] : NULL, optmask);
             (void)fclose(file);
         }
     } else {
-        nmatch += search_file(stdin, nfa, NULL, optmask);
+        nmatch += search_file(stdin, &nfa, NULL, optmask);
     }
-    NFA_free(nfa);
+    NFA_clear(&nfa);
     RE_free(re);
     if (optmask & OPT_COUNT)
         printf("%d\n", nmatch);
