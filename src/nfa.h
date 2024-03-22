@@ -33,7 +33,7 @@ struct Edge {
 
 struct NFA {
     int start, finish;
-    int *mark;
+    int nmark, *mark;
     array(Node) node;
     array(Edge) edge;
 };

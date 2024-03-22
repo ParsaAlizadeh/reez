@@ -23,7 +23,7 @@
         (arr).items = NULL;                     \
     } while (0)
 
-#define arrfree(arr)                            \
+#define arrclear(arr)                           \
     do {                                        \
         free((arr).items);                      \
         arrzero((arr));                         \
@@ -32,6 +32,7 @@
 void NFA_init(NFA *nfa) {
     arrzero(nfa->node);
     arrzero(nfa->edge);
+    nfa->nmark = 0;
     nfa->mark = NULL;
     nfa->start = nfa->finish = NFA_new_node(nfa)->id;
 }
@@ -53,10 +54,10 @@ Edge *NFA_get_edge(NFA *nfa, int i) {
 
 void NFA_clear(NFA *nfa) {
     for (int i = 0; i < nfa->node.count; i++) {
-        arrfree(nfa->node.items[i].adj);
+        arrclear(nfa->node.items[i].adj);
     }
-    arrfree(nfa->node);
-    arrfree(nfa->edge);
+    arrclear(nfa->node);
+    arrclear(nfa->edge);
     free(nfa->mark);
 }
 
@@ -182,9 +183,12 @@ static int _NFA_dfs(NFA *nfa, int uid, const char *text, const char *beg) {
 
 void NFA_traverse(NFA *nfa, const char *text, int ntext) {
     int nnode = nfa->node.count;
-    int nmark = (ntext + 1) * nnode;
-    nfa->mark = erealloc(nfa->mark, nmark * sizeof(int));
-    memset(nfa->mark, 0, nmark * sizeof(int));
+    int newnmark = (ntext + 1) * nnode;
+    if (newnmark > nfa->nmark) {
+        nfa->nmark = newnmark;
+        nfa->mark = erealloc(nfa->mark, nfa->nmark * sizeof(int));
+    }
+    memset(nfa->mark, 0, newnmark * sizeof(int));
     _NFA_dfs(nfa, nfa->start, text, text);
 }
 
